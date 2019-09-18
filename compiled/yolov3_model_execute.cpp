@@ -4,7 +4,6 @@
 #include "include/core/tensor.hpp"
 #include "include/core/types.hpp"
 #include "include/ops/conv.hpp"
-#include "include/ops/kpu/kpu_conv.hpp"
 #include "model_execute.hpp"
 // #include "graph_cpu_0.hpp"
 // #include "graph_kpu_0.hpp"

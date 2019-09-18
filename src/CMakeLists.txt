@@ -11,4 +11,4 @@ FILE(GLOB_RECURSE RVTENSOR_SRCS
     "${CMAKE_CURRENT_LIST_DIR}/../compiled/*.cpp"
     )
 
-  add_library(RVTensor STATIC ${RVTENSOR_SRCS})
+add_library(RVTensor STATIC ${RVTENSOR_SRCS})

@@ -17,11 +17,11 @@ endif()
 
 project(RVTensor)
 
-option(RVTENSOR_KENDRYTE "kendryte support" ON)
-option(RVTENSOR_GAP8     "gap8 support" OFF)
+option(RVTENSOR_QEMU     "qemu-riscv support" ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(src lib)
+#add_subdirectory(third_party)
 add_subdirectory(examples)
