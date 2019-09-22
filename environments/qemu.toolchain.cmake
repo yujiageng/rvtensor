@@ -3,9 +3,9 @@ set (CMAKE_SYSTEM_NAME Linux)
 # set (CMAKE_SYSTEM_VERSION 1)
 set (RISCV True)
 
-set(TOOLCHAIN_DIR "${FREEDOM_U_SDK}/work/buildroot_initramfs/host")
+set(TOOLCHAIN_DIR "${FREEDOM_U_SDK}/buildroot_initramfs/host")
 set(_CMAKE_TOOLCHAIN_PREFIX riscv64-sifive-linux-gnu)
-set(SYSROOT_DIR "${FREEDOM_U_SDK}/work/buildroot_initramfs/host/${_CMAKE_TOOLCHAIN_PREFIX}/sysroot")
+set(SYSROOT_DIR "${FREEDOM_U_SDK}/buildroot_initramfs/host/${_CMAKE_TOOLCHAIN_PREFIX}/sysroot")
 
 set(CMAKE_C_COMPILER ${TOOLCHAIN_DIR}/bin/${_CMAKE_TOOLCHAIN_PREFIX}-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_DIR}/bin/${_CMAKE_TOOLCHAIN_PREFIX}-g++)
