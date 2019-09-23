@@ -40,8 +40,8 @@ int cas_thread_create(int (*call_func)(void *)){
         if (-1 != ret) {
             pid_t pid = 0;
             printf("start thread %d \n", ret);
-            pid = waitpid(-1, NULL,  __WCLONE | __WALL);
-            printf("child : %d exit.\n", pid);
+            //pid = waitpid(-1, NULL,  __WCLONE | __WALL);
+            //printf("child : %d exit.\n", pid);
         } else {
             printf("clone failed %s\n", strerror(errno) );
         }
