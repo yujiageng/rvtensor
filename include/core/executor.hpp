@@ -11,11 +11,9 @@
 #include <string>
 #include <vector>
 #include "include/core/tensor.hpp"
+#include "include/net/net.hpp"
 
 namespace RVTensor {
-
-typedef void (*callback_draw_box)(uint32_t x1, uint32_t y1, uint32_t x2,
-    uint32_t y2, uint32_t classes, float prob);
 
 /**
  * Executor describes the context of a individual inference task.
@@ -24,13 +22,13 @@ class Executor {
  public:
     using sptr = std::shared_ptr<Executor>;
     static sptr create();
-    static sptr create(std::string model_name, int thread_num);
+    static sptr create(std::string model_name, int thread_num = 1);
 
     /**
      * Constructor
      */
     Executor();
-    Executor(std::string model_name, int thread_num);
+    Executor(std::string model_name, int thread_num = 1);
 
     /**
      * load image to Mat struct
@@ -39,8 +37,8 @@ class Executor {
      * @param height: height of input image
      * @param width:  width of imput image
      */
-    void loadImage(uint8_t* ai_buf, int channel, int height, int width);
-// void loadImage(std::string image_path, int channel, int height, int width);
+    void loadImage(std::string image_name, uint8_t* ai_buf,
+                   int channel, int height, int width);
 
     /**
      * Start to inference
@@ -50,17 +48,16 @@ class Executor {
     /**
      * Copy Output data to application
      */
-    void copyOutputData(void* data_ptr, size_t size);
+     // void copyOutputData(void* data_ptr, size_t size);
 
     /**
      * analysis inference result
      *
      * @param result_buf: result of inference
      * @param size: result size
-     * @param callback_draw_boxaram: callback to draw result
      */
-    int inferenceResult(void* result_buf, uint64_t size,
-        callback_draw_box call);
+    //int inferenceResult(void* result_buf, uint64_t size);
+    int inferenceResult();
 
     /**
      * Deconstructor
@@ -76,7 +73,9 @@ class Executor {
     RamTensor::sptr image_ptr;
     RamTensor::sptr output_ptr;
     /// model_name
-    std::string model_name_;
+    std::string model_name;
+    /// network
+    Net::sptr network_ptr;
 };
 
 }  // namespace RVTensor

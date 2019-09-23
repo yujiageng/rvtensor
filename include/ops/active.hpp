@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef INCLUDE_OPS_QUANTIZE_HPP_
-#define INCLUDE_OPS_QUANTIZE_HPP_
+#ifndef INCLUDE_OPS_ACTIVE_HPP_
+#define INCLUDE_OPS_ACTIVE_HPP_
 
 #include <vector>
 #include <memory>
@@ -16,26 +16,28 @@
 
 namespace RVTensor {
 
-class QuantizeOp: public Operation {
+class CPUActiveOp: public Operation {
  public:
-    using sptr = std::shared_ptr<QuantizeOp>;
+    using sptr = std::shared_ptr<CPUActiveOp>;
     static sptr create();
-    static sptr create(QuantizeParam qp,
+    static sptr create(ActiveType active_type,
         RamTensor::sptr input,
         RamTensor::sptr output);
 
     /**
      * Constructor & Deconstructor
      */
-    QuantizeOp();
-    QuantizeOp(QuantizeParam qp, RamTensor::sptr input, RamTensor::sptr output);
-    ~QuantizeOp();
-    QuantizeOp& operator=(const QuantizeOp& quant_op);
+    CPUActiveOp();
+    CPUActiveOp(ActiveType active_type,
+        RamTensor::sptr input,
+        RamTensor::sptr output);
+    ~CPUActiveOp();
+    CPUActiveOp& operator=(const CPUActiveOp& active_op);
 
     /**
      * check output dims
      */
-    void checkOutputDims() override;
+    // void checkOutputDims() override;
 
     /**
      * inference
@@ -43,10 +45,10 @@ class QuantizeOp: public Operation {
     void forward_compute() override;
 
  private:
-    /// quantize paramter
-    QuantizeParam param_;
+    /// active type
+    ActiveType param_;
 };
 
 }  // namespace RVTensor
 
-#endif  // INCLUDE_OPS_QUANTIZE_HPP_
+#endif  // INCLUDE_OPS_ACTIVE_HPP_
