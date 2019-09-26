@@ -8,48 +8,48 @@
 #ifndef INCLUDE_OPS_FC_HPP_
 #define INCLUDE_OPS_FC_HPP_
 
-#include <vector>
 #include <memory>
-#include "include/core/tensor.hpp"
+#include <vector>
 #include "include/core/operation.hpp"
+#include "include/core/tensor.hpp"
+#include "include/ops/bn.hpp"
 
 namespace RVTensor {
 
-class CPUFCOp: public Operation {
+class CPUFCOp : public Operation {
  public:
-    using sptr = std::shared_ptr<CPUFCOp>;
-    static sptr create();
-    static sptr create(RamTensor::sptr input,
-        RamTensor::sptr output,
-        FlashTensor::sptr weight,
-        FlashTensor::sptr bias = nullptr);
+  using sptr = std::shared_ptr<CPUFCOp>;
+  static sptr create();
+  static sptr create(RamTensor::sptr input, RamTensor::sptr output,
+                     FlashTensor::sptr weight,
+                     FlashTensor::sptr bias = nullptr);
 
-    /**
-     * Constructor & Deconstructor
-     */
-    CPUFCOp();
-    CPUFCOp(RamTensor::sptr input,
-        RamTensor::sptr output,
-        FlashTensor::sptr weight,
-        FlashTensor::sptr bias = nullptr);
-    ~CPUFCOp();
-    CPUFCOp& operator=(const CPUFCOp& fc_op);
+  /**
+   * Constructor & Deconstructor
+   */
+  CPUFCOp();
+  CPUFCOp(RamTensor::sptr input, RamTensor::sptr output,
+          FlashTensor::sptr weight, FlashTensor::sptr bias = nullptr);
+  ~CPUFCOp();
+  CPUFCOp& operator=(const CPUFCOp& fc_op);
 
-    /**
-     * check output dims
-     */
-    // void checkOutputDims() override;
+  void softmax(uint8_t* input, int n);
 
-    /**
-     * inference
-     */
-    void forward_compute() override;
+  void add_bias(uint8_t* output, uint8_t* biases, int batch, int n, int size);
+  void multl(int M, int N, int K, uint8_t* A, int lda, uint8_t* B, int ldb,
+             uint8_t* C, int ldc);
+
+  /**
+   * inference
+   */
+  void forward_compute() override;
 
  private:
-    /// model data: weight
-    FlashTensor::sptr weight_;
-    /// model data: bias
-    FlashTensor::sptr bias_;
+  /// model data: weight
+  FlashTensor::sptr weight_;
+  /// model data: bias
+  FlashTensor::sptr bias_;
+  ActiveType param_;
 };
 
 }  // namespace RVTensor
