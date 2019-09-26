@@ -37,6 +37,6 @@ add_compile_options(-march=rv64imafdc)
 add_compile_options(-mabi=lp64d)
 add_compile_options(-fno-common)
 #add_compile_options(-T "${SDK_DIR}/lds/kendryte.ld")
-#set(CMAKE_CXX_FLAGS "-O0 -std=gnu++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-O3 -std=gnu++11 ${CMAKE_CXX_FLAGS}")
 #set(CMAKE_C_FLAGS "-std=gnu11 ${CMAKE_C_FLAGS}")
 
