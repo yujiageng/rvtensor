@@ -8,7 +8,7 @@
 #ifndef INCLUDE_CORE_TYPES_HPP_
 #define INCLUDE_CORE_TYPES_HPP_
 
-#include<vector>
+#include <vector>
 
 namespace RVTensor {
 
@@ -16,7 +16,7 @@ struct ConvParam {
   /// stride
   int sw;
   int sh;
-  /// dilated
+  /// dilated 扩展的w, h
   int dw;
   int dh;
   /// add pad

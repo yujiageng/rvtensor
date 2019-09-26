@@ -9,28 +9,31 @@
 
 namespace RVTensor {
 
-CPUConvOp::sptr CPUConvOp::create() {
-  return std::make_shared<CPUConvOp>();
-}
+CPUConvOp::sptr CPUConvOp::create() { return std::make_shared<CPUConvOp>(); }
 
 CPUConvOp::sptr CPUConvOp::create(ConvParam conv_param, RamTensor::sptr input,
-                             RamTensor::sptr output, FlashTensor::sptr weight,
-                             FlashTensor::sptr bias) {
-  CPUConvOp::sptr ptr = std::make_shared<CPUConvOp>(conv_param, input,
-                                                    output, weight, bias);
+                                  RamTensor::sptr output,
+                                  FlashTensor::sptr weight,
+                                  FlashTensor::sptr bias) {
+  CPUConvOp::sptr ptr =
+      std::make_shared<CPUConvOp>(conv_param, input, output, weight, bias);
   ptr->checkOutputDims();
   return ptr;
 }
 
-inline CPUConvOp::CPUConvOp() : Operation({}, {}),
-                                param_({0, 0, 1, 1, 0, 0, false}),
-                                weight_(nullptr), bias_(nullptr) {}
+inline CPUConvOp::CPUConvOp()
+    : Operation({}, {}),
+      param_({0, 0, 1, 1, 0, 0, false}),
+      weight_(nullptr),
+      bias_(nullptr) {}
 
 inline CPUConvOp::CPUConvOp(ConvParam conv_param, RamTensor::sptr input,
                             RamTensor::sptr output, FlashTensor::sptr weight,
                             FlashTensor::sptr bias)
-                          : Operation({input}, {output}), param_(conv_param),
-                            weight_(weight), bias_(bias) {}
+    : Operation({input}, {output}),
+      param_(conv_param),
+      weight_(weight),
+      bias_(bias) {}
 
 inline CPUConvOp::~CPUConvOp() {}
 
@@ -43,10 +46,10 @@ inline void CPUConvOp::checkOutputDims() {
 
   int input_h = input->height + param_.ph;
   int input_w = input->width + param_.pw;
-  int kh = param_.dh > 1 ? (weight_->height - 1) * param_.dh + 1
-           : weight_->height;
-  int kw = param_.dw > 1 ? (weight_->width - 1) * param_.dw + 1
-           : weight_->width;
+  int kh =
+      param_.dh > 1 ? (weight_->height - 1) * param_.dh + 1 : weight_->height;
+  int kw =
+      param_.dw > 1 ? (weight_->width - 1) * param_.dw + 1 : weight_->width;
   int output_h = (input_h - kh) / param_.sh + 1;
   int output_w = (input_w - kw) / param_.sw + 1;
   int output_c = weight_->n_batch;
@@ -69,11 +72,10 @@ inline void CPUConvOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input = reinterpret_cast<uint8_t *>(input_tensor->data_ptr);
-  uint8_t* output = reinterpret_cast<uint8_t *>(output_tensor->data_ptr);
-  uint8_t* weight = reinterpret_cast<uint8_t *>(weight_->data_ptr);
-  uint8_t* bias = bias_ ?
-                    reinterpret_cast<uint8_t *>(bias_->data_ptr) : nullptr;
+  uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
+  uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
+  uint8_t* weight = reinterpret_cast<uint8_t*>(weight_->data_ptr);
+  uint8_t* bias = bias_ ? reinterpret_cast<uint8_t*>(bias_->data_ptr) : nullptr;
 
   int ni = input_tensor->n_batch;
   int ci = input_tensor->channel;
@@ -86,7 +88,7 @@ inline void CPUConvOp::forward_compute() {
   int stepo = output_tensor->cstep;
   int sh = param_.sh;
   int sw = param_.sw;
-  int kh = weight_->height;
+  int kh = weight_->height; 
   int kw = weight_->width;
   int dh = param_.dh;
   int dw = param_.dw;
@@ -98,12 +100,13 @@ inline void CPUConvOp::forward_compute() {
   if (dh > 1 || dw > 1) {
     kh = (kh - 1) * dh + 1;
     kw = (kw - 1) * dw + 1;
-    temp_weight = reinterpret_cast<uint8_t *>(
-                   malloc(sizeof(uint8_t) * kw * kh * ci * co));
+    temp_weight =
+        reinterpret_cast<uint8_t*>(malloc(sizeof(uint8_t) * kw * kh * ci * co));
     x = -1;
     y = -1;
-    for (int coi = 0; coi < co; coi++) {
-      for (int cii = 0; cii < ci; cii++) {
+    // padding
+    for (int coi = 0; coi < co; coi++) { // 输出channel
+      for (int cii = 0; cii < ci; cii++) { // 输入channel
         for (int khi = 0; khi < kh; khi++) {
           for (int kwi = 0; kwi < kw; kwi++) {
             x++;
@@ -120,17 +123,20 @@ inline void CPUConvOp::forward_compute() {
   } else {
     temp_weight = weight;
   }
-
+  // 卷积
   for (int n = 0; n < ni; n++) {
     for (int coo = 0; coo < co; coo++) {
       for (int hoo = 0; hoo < ho; hoo++) {
         for (int woo = 0; woo < wo; woo++) {
+          // 卷积开始和结束的index
           int start_w = sw * woo - pw / 2;
           int start_h = sh * hoo - ph / 2;
           int end_w = (std::min)(start_w + kw, wi);
           int end_h = (std::min)(start_h + kh, hi);
+          // kernel滑动的 index
           int kernel_shift_w = (start_w < 0) ? -start_w : 0;
           int kernel_shift_h = (start_h < 0) ? -start_h : 0;
+          //
           int rem_dw = kernel_shift_w % dw;
           int rem_dh = kernel_shift_h % dh;
           int kernel_shift_dw = (rem_dw > 0) ? dw - rem_dw : 0;
@@ -142,10 +148,11 @@ inline void CPUConvOp::forward_compute() {
             for (int h = start_h; h < end_h; h += dh) {
               for (int w = start_w; w < end_w; w += dw) {
                 output[n * co * stepo + coo * stepo + hoo * wo + woo] +=
-                  input[n * ci *  stepi + cii *  stepi + h * wi + w] *
-                  temp_weight[coo * ci * kh * kw + cii * kh * kw +
-                  (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
-                  (kernel_shift_w + kernel_shift_dw + w - start_w)];
+                    input[n * ci * stepi + cii * stepi + h * wi + w] *
+                    temp_weight
+                        [coo * ci * kh * kw + cii * kh * kw +
+                         (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
+                         (kernel_shift_w + kernel_shift_dw + w - start_w)];
               }
             }
           }

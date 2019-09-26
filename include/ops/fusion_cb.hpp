@@ -13,6 +13,8 @@
 #include "include/core/tensor.hpp"
 #include "include/core/operation.hpp"
 #include "include/core/types.hpp"
+#include "include/ops/conv.hpp"
+#include "include/ops/bn.hpp"
 
 namespace RVTensor {
 
