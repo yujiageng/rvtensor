@@ -51,9 +51,9 @@ inline void CPUAddOp::forward_compute() {
 
   int i, j, k, b;
   for (b = 0; b < batch2; ++b) {
-    for (k = 0; k < channel1; ++k) {
-      for (j = 0; j < height1; ++j) {
-        for (i = 0; i < width1; ++i) {
+    for (j = 0; j < height1; ++j) {
+      for (i = 0; i < width1; ++i) {
+        for (k = 0; k < channel1; ++k) {
           int index = i + width1 * (j + height1 * (k + channel1 * b));
           output[index] = input2[index] + input1[index];
         }
