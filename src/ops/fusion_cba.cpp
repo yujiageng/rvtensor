@@ -54,12 +54,14 @@ inline void CPUFusionCBAOp::forward_compute() {
   uint8_t* bias = bias_ ? reinterpret_cast<uint8_t*>(bias_->data_ptr) : nullptr;
 
   // TODO: complete it
-  CPUConvOp conv(conv_param_, input, output, weight, bias);
-  conv.forward_compute();
-  CPUBnOp BN(bn_param_, input, output);
-  BN.forward_compute();
-  CPUActiveOp activate(active_type_, input, output);
-  activate.forward_compute();
+  // TODO: create tmp_output1 as output. 
+  auto conv = CPUConvOp::create(conv_param_, input_tensor, output_tensor, weight_, bias_);
+  conv->forward_compute();
+  // TODO: create tmp_output2 as output. 
+  auto bn = CPUBnOp::create(bn_param_, input_tensor, output_tensor);
+  bn->forward_compute();
+  auto act = CPUActiveOp::create(active_type_, input_tensor, output_tensor);
+  act->forward_compute();
 }
 
 }  // namespace RVTensor
