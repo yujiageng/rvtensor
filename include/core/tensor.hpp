@@ -51,16 +51,16 @@ class Tensor {
  public:
   using sptr = std::shared_ptr<Tensor>;
   static sptr create();
-  static sptr create(int n, int c, int h, int w, size_t elemsize = 4u);
-  static sptr create(int n, int c, int h, int w, void* data,
+  static sptr create(int n, int h, int w, int c, size_t elemsize = 4u);
+  static sptr create(int n, int h, int w, int c, void* data,
                      size_t elemsize = 4u);
 
   /**
    * Constructor & Deconstructor
    */
   Tensor();
-  Tensor(int n, int c, int h, int w, size_t elemsize = 4u);
-  Tensor(int n, int c, int h, int w, void* data, size_t elemsize = 4u);
+  Tensor(int n, int h, int w, int c, size_t elemsize = 4u);
+  Tensor(int n, int h, int w, int c, void* data, size_t elemsize = 4u);
   ~Tensor();
   Tensor& operator=(const Tensor& m);
 
@@ -105,37 +105,26 @@ class Tensor {
   int channel;
 
   /**
-   * layout of the martrix(w, h)
+   * layout of the channel
    * ????
    */
   size_t cstep;
-
-  /**
-   * quantize params and method
-   */
-  float min_range;
-  float max_range;
-  int64_t scale;
-  float zero_point;
-  void setQuantizeParams(float min, float max, int64_t sc, float zero);
-  void setQuantizeRange(float min, float max);
-  void setQuantizer(int64_t sc, float zero);
 };
 
 class FlashTensor : public Tensor {
  public:
   using sptr = std::shared_ptr<FlashTensor>;
   static sptr create();
-  static sptr create(int n, int c, int h, int w, size_t elemsize = 4u);
-  static sptr create(int n, int c, int h, int w, void* data,
+  static sptr create(int n, int h, int w, int c, size_t elemsize = 4u);
+  static sptr create(int n, int h, int w, int c, void* data,
                      size_t elemsize = 4u);
 
   /**
    * Constructor & Deconstructor
    */
   FlashTensor();
-  FlashTensor(int n, int c, int h, int w, size_t elemsize = 4u);
-  FlashTensor(int n, int c, int h, int w, void* data, size_t elemsize = 4u);
+  FlashTensor(int n, int h, int w, int c, size_t elemsize = 4u);
+  FlashTensor(int n, int h, int w, int c, void* data, size_t elemsize = 4u);
   ~FlashTensor();
   FlashTensor& operator=(const FlashTensor& m);
 
@@ -150,11 +139,7 @@ class FlashTensor : public Tensor {
   template <typename T>
   const T* grepBatchData(int n) const;
   template <typename T>
-  const T* grepChannelData(int n, int c) const;
-  template <typename T>
-  const T* grepRowData(int n, int c, int h) const;
-  template <typename T>
-  const T grepElement(int n, int c, int h, int w) const;
+  const T grepElement(int n, int h, int w, int c) const;
   template <typename T>
   operator const T*() const;
 };
@@ -163,16 +148,16 @@ class RamTensor : public Tensor {
  public:
   using sptr = std::shared_ptr<RamTensor>;
   static sptr create();
-  static sptr create(int n, int c, int h, int w, size_t elemsize = 4u);
-  static sptr create(int n, int c, int h, int w, void* data,
+  static sptr create(int n, int h, int w, int c, size_t elemsize = 4u);
+  static sptr create(int n, int h, int w, int c, void* data,
                      size_t elemsize = 4u);
 
   /**
    * Constructor & Deconstructor
    */
   RamTensor();
-  RamTensor(int n, int c, int h, int w, size_t elemsize);
-  RamTensor(int n, int c, int h, int w, void* data, size_t elemsize);
+  RamTensor(int n, int h, int w, int c, size_t elemsize);
+  RamTensor(int n, int h, int w, int c, void* data, size_t elemsize);
   ~RamTensor();
   RamTensor& operator=(const RamTensor& m);
 
@@ -199,11 +184,7 @@ class RamTensor : public Tensor {
   template <typename T>
   T* grepBatchData(int n);
   template <typename T>
-  T* grepChannelData(int n, int c);
-  template <typename T>
-  T* grepRowData(int n, int c, int h);
-  template <typename T>
-  T grepElement(int n, int c, int h, int w);
+  T grepElement(int n, int h, int w, int c);
   template <typename T>
   operator T*();
 

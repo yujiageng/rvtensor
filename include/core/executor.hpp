@@ -30,6 +30,9 @@ class Executor {
     Executor();
     Executor(std::string model_name, int thread_num = 1);
 
+    // for resnet20
+    void parseModel();
+
     /**
      * load image to Mat struct
      *
@@ -76,6 +79,8 @@ class Executor {
     std::string model_name;
     /// network
     Net::sptr network_ptr;
+    /// for resnet20
+
 };
 
 }  // namespace RVTensor

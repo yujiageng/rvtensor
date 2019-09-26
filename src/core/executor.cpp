@@ -27,6 +27,8 @@ Executor::Executor(std::string model_name, int thread_num)
     network_ptr = Net::create(model_name);
 }
 
+void Executor::parseModel() {}
+
 void Executor::loadImage(std::string image_name, uint8_t* ai_buf,
                          int channel, int height, int width) {
   image_ptr = RamTensor::create(1, channel, height, width,
