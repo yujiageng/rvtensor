@@ -50,9 +50,9 @@ inline void CPUFlattenOp::forward_compute() {
         swap[i1] = input[i2];
       }
     }
-    memcpy(output, swap, count * sizeof(float));
-    free(swap);
   }
+  memcpy(output, swap, count * sizeof(float));
+  free(swap);
 }
 
 }  // namespace RVTensor
