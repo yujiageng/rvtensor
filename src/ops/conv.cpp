@@ -125,9 +125,9 @@ inline void CPUConvOp::forward_compute() {
   }
   // 卷积
   for (int n = 0; n < ni; n++) {
-    for (int coo = 0; coo < co; coo++) {
-      for (int hoo = 0; hoo < ho; hoo++) {
-        for (int woo = 0; woo < wo; woo++) {
+    for (int hoo = 0; hoo < ho; hoo++) {
+      for (int woo = 0; woo < wo; woo++) {
+        for (int coo = 0; coo < co; coo++) {
           // 卷积开始和结束的index
           int start_w = sw * woo - pw / 2;
           int start_h = sh * hoo - ph / 2;
