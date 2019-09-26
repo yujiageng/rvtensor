@@ -39,7 +39,11 @@ inline CPUAccelerationConvOp::CPUAccelerationConvOp(ConvParam conv_param,
       weight_(weight),
       bias_(bias) {}
 
-inline CPUAccelerationConvOp::~CPUAccelerationConvOp() {}
+inline CPUAccelerationConvOp::~CPUAccelerationConvOp() {
+  for (int i = 0; i < tofree_.size();i++) {
+    free(tofree_[i]);
+  }
+}
 
 inline void CPUAccelerationConvOp::checkOutputDims() {
   auto input = getInputs()[0];
@@ -119,6 +123,7 @@ inline void CPUAccelerationConvOp::forward_compute() {
   for (int i = 0; i < ni; ++i) {
     /*用于存储经im2col转换后的输入特征矩阵*/
     uint8_t* a = (uint8_t*)calloc(1024, sizeof(uint8_t));
+    tofree_.push_back(a);
 
     /*a是指向当前层所有卷积核的*/
     uint8_t* b = weight;
@@ -174,6 +179,10 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
   uint8_t* S2 =(uint8_t*) calloc((M / 2) * (K / 2), sizeof(uint8_t));
   uint8_t* S3 =(uint8_t*) calloc((M / 2) * (K / 2), sizeof(uint8_t));
   uint8_t* S4 =(uint8_t*) calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  tofree_.push_back(S1);
+  tofree_.push_back(S2);
+  tofree_.push_back(S3);
+  tofree_.push_back(S4);
   for (int i = 0; i < M / 2; i++) {
     for (int j = 0; j < K / 2; j++) {
       const int idx = i * K / 2 + j;
@@ -192,6 +201,10 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
   uint8_t* T2 =(uint8_t*) calloc((K / 2) * (N / 2), sizeof(uint8_t));
   uint8_t* T3 =(uint8_t*) calloc((K / 2) * (N / 2), sizeof(uint8_t));
   uint8_t* T4 =(uint8_t*) calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(T1);
+  tofree_.push_back(T2);
+  tofree_.push_back(T3);
+  tofree_.push_back(T4);
   for (int i = 0; i < K / 2; i++) {
     for (int j = 0; j < N / 2; j++) {
       const int idx = i * N / 2 + j;
@@ -209,6 +222,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M1 = A11*B11
   uint8_t* M1 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M1);
   {
     printf("M1\n");
     coppersmith_winograd(matA, matB, M1, M / 2, N / 2, K / 2, strideA, strideB,
@@ -217,6 +231,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M2 = A12*B21
   uint8_t* M2 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M2);
   {
     printf("M2\n");
 
@@ -226,6 +241,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M3 = S4*B22
   uint8_t* M3 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M3);
   {
     printf("M3\n");
     coppersmith_winograd(S4, matB + K * strideB / 2 + N / 2, M3, M / 2, N / 2,
@@ -234,6 +250,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M4 = A22*T4
   uint8_t* M4 =(uint8_t*) calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M4);
   {
     printf("M4\n");
     coppersmith_winograd(matA + M * strideA / 2 + K / 2, T4, M4, M / 2, N / 2,
@@ -242,6 +259,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M5 = S1*T1
   uint8_t* M5 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M5);
   {
     printf("M5\n");
     coppersmith_winograd(S1, T1, M5, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
@@ -249,6 +267,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M6 = S2*T2
   uint8_t* M6 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M6);
   {
     printf("M6\n");
     coppersmith_winograd(S2, T2, M6, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
@@ -256,6 +275,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
 
   // M7 = S3*T3
   uint8_t* M7 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  tofree_.push_back(M7);
   {
     printf("M7\n");
     coppersmith_winograd(S3, T3, M7, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);

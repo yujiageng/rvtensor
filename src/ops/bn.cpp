@@ -18,13 +18,15 @@ CPUBnOp::sptr CPUBnOp::create(BatchNormParam bn_param, RamTensor::sptr input,
   return ptr;
 }
 
-inline CPUBnOp::CPUBnOp() : Operation({}, {}), param_({{}, {}, 0.001}) {}
+inline CPUBnOp::CPUBnOp() : Operation({}, {}), param_({{}, {}, 0.001}),weight_(nullptr),bias_(nullptr),scales_(nullptr) {}
 
 inline CPUBnOp::CPUBnOp(BatchNormParam bn_param, RamTensor::sptr input,
                         RamTensor::sptr output)
     : Operation({input}, {output}), param_(bn_param) {}
 
-inline CPUBnOp::~CPUBnOp() {}
+inline CPUBnOp::~CPUBnOp() {
+  if (scales_) free(scales_);
+}
 
 inline void CPUBnOp::forward_compute() {
   auto input_tensor = getInputs()[0];
@@ -50,6 +52,7 @@ inline void CPUBnOp::forward_compute() {
   std::vector<float> mean = param_.mean;
   std::vector<float> variance = param_.variance;
   float *scales = (float*)calloc(output_c, sizeof(float));
+  if (!scales) { scales_ = scales;}
 
   // memset(scales, 1, output_c);
   // 将 input copy 到 output

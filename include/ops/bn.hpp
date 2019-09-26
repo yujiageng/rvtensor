@@ -52,6 +52,7 @@ class CPUBnOp : public Operation {
   FlashTensor::sptr weight_;
   /// model data: bias
   FlashTensor::sptr bias_;
+  float *scales_;
 };
 
 }  // namespace RVTensor
