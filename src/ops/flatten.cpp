@@ -37,9 +37,9 @@ inline void CPUFlattenOp::forward_compute() {
   int channel = input_tensor->channel;
   int height = input_tensor->height;
   int width = input_tensor->width;
-  int count = input_tensor->count;
+  int count = input_tensor->count();
 
-  float* swap = calloc(count, sizeof(float));
+  float* swap = (float*)calloc(count, sizeof(float));
   int i, c, b;
   for (b = 0; b < batch; ++b) {
     for (c = 0; c < channel; ++c) {

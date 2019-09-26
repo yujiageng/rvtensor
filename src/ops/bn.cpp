@@ -49,11 +49,11 @@ inline void CPUBnOp::forward_compute() {
   // bn_param;
   std::vector<float> mean = param_.mean;
   std::vector<float> variance = param_.variance;
-  float *scales = calloc(output_c, sizeof(float));
+  float *scales = (float*)calloc(output_c, sizeof(float));
 
   // memset(scales, 1, output_c);
   // 将 input copy 到 output
-  copy_cpu(input_tensor->count, input, 1, output, 1);
+  copy_cpu(input_tensor->count(), input, 1, output, 1);
   // 归一化
   normalize_cpu(output, &mean[0], &variance[0], input_batch, output_c,
                 output_h * output_w);

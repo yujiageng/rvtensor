@@ -39,12 +39,12 @@ inline void CPUActiveOp::forward_compute() {
 
   // TODO: complete it
   if (!param_) {
-    softmax(input, input_tensor->trueSize, output);
+    softmax(input, input_tensor->trueSize(), output);
   } else {
-    relu(input, input_tensor->trueSize, output);
+    relu(input, input_tensor->trueSize(), output);
   }
 }
-void relu(uint8_t* inputs, int n, uint8_t* outputs) {
+void CPUActiveOp::relu(uint8_t* inputs, int n, uint8_t* outputs) {
   int i;
   for (i = 0; i < n; ++i) {
     if (inputs[i] > 0) {
@@ -54,7 +54,7 @@ void relu(uint8_t* inputs, int n, uint8_t* outputs) {
     }
   }
 }
-void softmax(uint8_t* input, int n, uint8_t* output) {
+void CPUActiveOp::softmax(uint8_t* input, int n, uint8_t* output) {
   int i;
   float sum = 0;
   float largest = 0;

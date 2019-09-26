@@ -41,8 +41,8 @@ inline void CPUFCOp::forward_compute() {
 
   // TODO: complete it
   int m = input_tensor->n_batch;
-  int k = input_tensor->count;
-  int n = output_tensor->count;
+  int k = input_tensor->count();
+  int n = output_tensor->count();
 
   multl(m, n, k, input, k, weight, k, output, n);
 
