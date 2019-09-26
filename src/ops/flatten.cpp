@@ -42,8 +42,8 @@ inline void CPUFlattenOp::forward_compute() {
   float* swap = (float*)calloc(count, sizeof(float));
   int i, c, b;
   for (b = 0; b < batch; ++b) {
-    for (c = 0; c < channel; ++c) {
-      for (i = 0; i < width * height; ++i) {
+    for (i = 0; i < width * height; ++i) {
+      for (c = 0; c < channel; ++c) {
         int i1 = b * width * height * channel + c * width * height + i;
         int i2 = b * width * height * channel + i * channel + c;
 
