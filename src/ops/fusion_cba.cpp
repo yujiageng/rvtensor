@@ -6,7 +6,7 @@
  */
 
 #include "include/ops/fusion_cba.hpp"
-
+#include "math.h"
 namespace RVTensor {
 
 CPUFusionCBAOp::sptr CPUFusionCBAOp::create() {
@@ -52,16 +52,312 @@ inline void CPUFusionCBAOp::forward_compute() {
   uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
   uint8_t* weight = reinterpret_cast<uint8_t*>(weight_->data_ptr);
   uint8_t* bias = bias_ ? reinterpret_cast<uint8_t*>(bias_->data_ptr) : nullptr;
+  // // TODO: complete it
+  // auto tmp_output1 = output_tensor;
+  // auto tmp_output2 = output_tensor;
+  // auto conv =
+  //     CPUConvOp::create(conv_param_, input_tensor, tmp_output1, weight_,
+  //     bias_);
+  // conv->forward_compute();
+  // // TODO: create tmp_output2 as output.
+  // auto bn = CPUBnOp::create(bn_param_, tmp_output1, tmp_output2);
+  // bn->forward_compute();
+  // auto act = CPUActiveOp::create(active_type_, tmp_output2, output_tensor);
+  // act->forward_compute();
 
-  // TODO: complete it
-  // TODO: create tmp_output1 as output.
-  auto conv = CPUConvOp::create(conv_param_, input_tensor, output_tensor, weight_, bias_);
-  conv->forward_compute();
-  // TODO: create tmp_output2 as output.
-  auto bn = CPUBnOp::create(bn_param_, input_tensor, output_tensor);
-  bn->forward_compute();
-  auto act = CPUActiveOp::create(active_type_, input_tensor, output_tensor);
-  act->forward_compute();
+  int ni = input_tensor->n_batch;
+  int ci = input_tensor->channel;
+  int hi = input_tensor->height;
+  int wi = input_tensor->width;
+
+  int co = output_tensor->channel;
+  int ho = output_tensor->height;
+  int wo = output_tensor->width;
+  int sh = conv_param_.sh;
+  int sw = conv_param_.sw;
+  int kh = weight_->height;
+  int kw = weight_->width;
+  int dh = conv_param_.dh;
+  int dw = conv_param_.dw;
+  int ph = conv_param_.ph;
+  int pw = conv_param_.pw;
+
+  // bn_param;
+  std::vector<float> mean = bn_param_.mean;
+  std::vector<float> variance = bn_param_.variance;
+  float* scales = (float*)calloc(co, sizeof(float));
+
+  // 卷积核的个数 = 输出的通道数
+  int m = output_tensor->channel;
+  /*卷积核 元素的个数,l.size=卷积核的尺寸，l.c= 卷积核的通道*/
+  int k = kh * kw * ci;
+  /*该层输出单通道的特征图的尺寸*/
+  int n = ho * wo;
+
+  /*循环batch中的每个输入*/
+  for (int i = 0; i < ni; ++i) {
+    /*用于存储经im2col转换后的输入特征矩阵*/
+    uint8_t* a = (uint8_t*)calloc(1024, sizeof(uint8_t));
+
+    /*a是指向当前层所有卷积核的*/
+    uint8_t* b = weight;
+    /*输出特征图个数*/
+    uint8_t* c = output + i * n * m;
+    uint8_t* im = input + i * ci * hi * wi;
+    /*如果是1*1的卷积，那么不用对输入特征进行转化*/
+    if (kh * kw == 1) {
+      a = im;
+    } else {
+      /*对输入特征进行转化*/
+      im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
+    }
+    coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+  }
+  /*BN input
+  conv_layer output = bn_layer input
+  bn_layer output 放入 output_tensor，并将output_tensor
+  作为activate_layer的输入， activate_layer的输出放入output_tensor中
+  */
+  auto temp_bn_tensor = output_tensor;
+
+  uint8_t* temp_bn_input = reinterpret_cast<uint8_t*>(temp_bn_tensor->data_ptr);
+  /*BN  */
+  copy_cpu(temp_bn_tensor->count(), temp_bn_input, 1, output, 1);
+  // 归一化
+  normalize_cpu(output, &mean[0], &variance[0], ni, co, ho * wo);
+  // scales大小为out_c的数组，值全是1
+  scale_bias(output, scales, ni, co, ho * wo);
+  add_bias(output, bias, ni, co, ho * wo);
+  /*激活  */
+  auto temp_ac_tensor = output_tensor;
+  uint8_t* temp_ac_input = reinterpret_cast<uint8_t*>(temp_ac_tensor->data_ptr);
+  relu(temp_ac_input, temp_ac_tensor->count(), output);
+}
+inline void CPUFusionCBAOp::mm_generate(uint8_t* matA, uint8_t* matB,
+                                        uint8_t* matC, const int M, const int N,
+                                        const int K, const int strideA,
+                                        const int strideB, const int strideC) {
+  //    printf("into mm_generate\n");
+
+  for (int i = 0; i < M; i++) {
+    for (int k = 0; k < K; k++) {
+      for (int j = 0; j < N; j++) {
+        matC[i * strideC + j] += matA[i * strideA + k] * matB[k * strideB + j];
+      }
+    }
+  }
+}
+inline void CPUFusionCBAOp::coppersmith_winograd(uint8_t* matA, uint8_t* matB,
+                                                 uint8_t* matC, int M, int N,
+                                                 int K, int strideA,
+                                                 int strideB, int strideC) {
+  // step 1:使用普通的矩阵
+  if ((M <= 64) || (M % 2 != 0 || N % 2 != 0 || K % 2 != 0)) {
+    return mm_generate(matA, matB, matC, M, N, K, strideA, strideB, strideC);
+  }
+  // matC = calloc(M * strideC, sizeof(uint8_t));
+  int offset = 0;
+
+  uint8_t* S1 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  uint8_t* S2 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  uint8_t* S3 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  uint8_t* S4 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  for (int i = 0; i < M / 2; i++) {
+    for (int j = 0; j < K / 2; j++) {
+      const int idx = i * K / 2 + j;
+      // S1 = A21 + A22
+      S1[idx] = matA[(i + M / 2) * strideA + j] +
+                matA[(i + M / 2) * strideA + j + K / 2];
+      // S2 = S1 - A11
+      S2[idx] = S1[idx] - matA[i * strideA + j];
+      // S3 = A11 - A21
+      S3[idx] = matA[i * strideA + j] - matA[(i + M / 2) * strideA + j];
+      // S4 = A12 - S2
+      S4[idx] = matA[i * strideA + j + K / 2] - S2[idx];
+    }
+  }
+  uint8_t* T1 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  uint8_t* T2 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  uint8_t* T3 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  uint8_t* T4 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  for (int i = 0; i < K / 2; i++) {
+    for (int j = 0; j < N / 2; j++) {
+      const int idx = i * N / 2 + j;
+      // T1 = B21 - B11
+      T1[idx] = matB[(i + K / 2) * strideB + j] - matB[i * strideB + j];
+      // T2 = B22 - T1
+      T2[idx] = matB[(i + K / 2) * strideB + j + N / 2] - T1[idx];
+      // T3 = B22 - B12
+      T3[idx] = matB[(i + K / 2) * strideB + j + N / 2] -
+                matB[i * strideB + j + N / 2];
+      // T4 = T2 - B21
+      T4[idx] = T2[idx] - matB[(i + K / 2) * strideB + j];
+    }
+  }
+
+  // M1 = A11*B11
+  uint8_t* M1 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(matA, matB, M1, M / 2, N / 2, K / 2, strideA, strideB,
+                         N / 2);
+  }
+
+  // M2 = A12*B21
+  uint8_t* M2 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(matA + K / 2, matB + K * strideB / 2, M2, M / 2, N / 2,
+                         K / 2, strideA, strideB, N / 2);
+  }
+
+  // M3 = S4*B22
+  uint8_t* M3 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(S4, matB + K * strideB / 2 + N / 2, M3, M / 2, N / 2,
+                         K / 2, K / 2, strideB, N / 2);
+  }
+
+  // M4 = A22*T4
+  uint8_t* M4 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(matA + M * strideA / 2 + K / 2, T4, M4, M / 2, N / 2,
+                         K / 2, strideA, N / 2, N / 2);
+  }
+
+  // M5 = S1*T1
+  uint8_t* M5 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(S1, T1, M5, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
+  }
+
+  // M6 = S2*T2
+  uint8_t* M6 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(S2, T2, M6, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
+  }
+
+  // M7 = S3*T3
+  uint8_t* M7 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  {
+    coppersmith_winograd(S3, T3, M7, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
+  }
+  for (int i = 0; i < M / 2; i++) {
+    for (int j = 0; j < N / 2; j++) {
+      const int idx = i * N / 2 + j;
+      // U1 = M1 + M2
+      const auto U1 = M1[idx] + M2[idx];
+      // U2 = M1 + M6
+      const auto U2 = M1[idx] + M6[idx];
+      // U3 = U2 + M7
+      const auto U3 = U2 + M7[idx];
+      // U4 = U2 + M5
+      const auto U4 = U2 + M5[idx];
+      // U5 = U4 + M3
+      const auto U5 = U4 + M3[idx];
+      // U6 = U3 - M4
+      const auto U6 = U3 - M4[idx];
+      // U7 = U3 + M5
+      const auto U7 = U3 + M5[idx];
+
+      // C11 = U1
+      matC[i * strideC + j] = U1;
+      // C12 = U5
+      matC[i * strideC + j + N / 2] = U5;
+      // C21 = U6
+      matC[(i + M / 2) * strideC + j] = U6;
+      // C22 = U7
+      matC[(i + M / 2) * strideC + j + N / 2] = U7;
+    }
+  }
 }
 
+inline float CPUFusionCBAOp::im2col_get_pixel(uint8_t* im, int height,
+                                              int width, int channels, int row,
+                                              int col, int channel, int pad) {
+  row -= pad;
+  col -= pad;
+
+  if (row < 0 || col < 0 || row >= height || col >= width) return 0;
+  return im[col + width * (row + height * channel)];
+}
+
+inline void CPUFusionCBAOp::im2col_cpu(uint8_t* data_im, int channels,
+                                       int height, int width, int ksize,
+                                       int stride, int pad, uint8_t* data_col) {
+  int c, h, w;
+  // 计算卷基层输出图像的高 和宽
+  int height_col = (height + 2 * pad - ksize) / stride + 1;
+  int width_col = (width + 2 * pad - ksize) / stride + 1;
+  //计算卷积层输入单通道图像的数据容量
+  int channels_col = channels * ksize * ksize;
+  //循环每个卷积核的参数个数
+  for (c = 0; c < channels_col; ++c) {
+    int w_offset = c % ksize;
+    int h_offset = (c / ksize) % ksize;
+    int c_im = c / ksize / ksize;
+    // 用卷积核把图像遍历一遍
+    for (h = 0; h < height_col; ++h) {
+      for (w = 0; w < width_col; ++w) {
+        int im_row = h_offset + h * stride;
+        int im_col = w_offset + w * stride;
+        int col_index = (c * height_col + h) * width_col + w;
+        data_col[col_index] = im2col_get_pixel(data_im, height, width, channels,
+                                               im_row, im_col, c_im, pad);
+      }
+    }
+  }
+}
+
+inline void CPUFusionCBAOp::copy_cpu(int N, uint8_t* X, int INCX, uint8_t* Y,
+                                     int INCY) {
+  int i;
+  for (i = 0; i < N; ++i) Y[i * INCY] = X[i * INCX];
+}
+//归一化
+inline void CPUFusionCBAOp::normalize_cpu(uint8_t* x, float* mean,
+                                          float* variance, int batch,
+                                          int filters, int spatial) {
+  int b, f, i;
+  for (b = 0; b < batch; ++b) {
+    for (i = 0; i < spatial; ++i) {
+      for (f = 0; f < filters; ++f) {
+        int index = b * filters * spatial + f * spatial + i;
+        //公式中的ε=.000001f
+        x[index] = (x[index] - mean[f]) / (sqrt(variance[f]) + .000001f);
+      }
+    }
+  }
+}
+inline void CPUFusionCBAOp::scale_bias(uint8_t* output, float* scales,
+                                       int batch, int n, int size) {
+  // scales 全是1
+  int i, j, b;
+  for (b = 0; b < batch; ++b) {
+    for (j = 0; j < size; ++j) {
+      for (i = 0; i < n; ++i) {
+        output[(b * n + i) * size + j] *= scales[i];
+      }
+    }
+  }
+}
+inline void CPUFusionCBAOp::add_bias(uint8_t* output, uint8_t* biases,
+                                     int batch, int n, int size) {
+  int i, j, b;
+  for (b = 0; b < batch; ++b) {
+    for (j = 0; j < size; ++j) {
+      for (i = 0; i < n; ++i) {
+        output[(b * n + i) * size + j] += biases[i];
+      }
+    }
+  }
+}
+void CPUFusionCBAOp::relu(uint8_t* inputs, int n, uint8_t* outputs) {
+  int i;
+  for (i = 0; i < n; ++i) {
+    if (inputs[i] > 0) {
+      outputs[i] = inputs[i];
+    } else {
+      outputs[i] = 0;
+    }
+  }
+}
 }  // namespace RVTensor
