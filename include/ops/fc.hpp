@@ -33,11 +33,11 @@ class CPUFCOp : public Operation {
   ~CPUFCOp();
   CPUFCOp& operator=(const CPUFCOp& fc_op);
 
-  void softmax(uint8_t* input, int n);
+  void softmax(float* input, int n);
 
-  void add_bias(uint8_t* output, uint8_t* biases, int batch, int n, int size);
-  void multl(int M, int N, int K, uint8_t* A, int lda, uint8_t* B, int ldb,
-             uint8_t* C, int ldc);
+  void add_bias(float* output, float* biases, int batch, int n, int size);
+  void multl(int M, int N, int K, float* A, int lda, float* B, int ldb,
+             float* C, int ldc);
 
   /**
    * inference

@@ -40,7 +40,7 @@ class CPUAccelerationConvOp : public Operation {
   /**
    * 普通矩阵相乘
    */
-  void mm_generate(uint8_t* matA, uint8_t* matB, uint8_t* matC, const int M,
+  void mm_generate(float* matA, float* matB, float* matC, const int M,
                    const int N, const int K, const int strideA,
                    const int strideB, const int strideC);
   /**
@@ -54,15 +54,14 @@ class CPUAccelerationConvOp : public Operation {
    * U4 = U2 + M5                         C22 = U7
    *
    */
-  void coppersmith_winograd(uint8_t* matA, uint8_t* matB, uint8_t* matC, int M,
-                            int N, int K, int strideA, int strideB,
-                            int strideC);
+  void coppersmith_winograd(float* matA, float* matB, float* matC, int M, int N,
+                            int K, int strideA, int strideB, int strideC);
 
-  float im2col_get_pixel(uint8_t* im, int height, int width, int channels,
+  float im2col_get_pixel(float* im, int height, int width, int channels,
                          int row, int col, int channel, int pad);
 
-  void im2col_cpu(uint8_t* data_im, int channels, int height, int width,
-                  int ksize, int stride, int pad, uint8_t* data_col);
+  void im2col_cpu(float* data_im, int channels, int height, int width,
+                  int ksize, int stride, int pad, float* data_col);
   /**
    * inference
    */
@@ -75,7 +74,7 @@ class CPUAccelerationConvOp : public Operation {
   FlashTensor::sptr weight_;
   /// model data: bias
   FlashTensor::sptr bias_;
-  std::vector<uint8_t*> tofree_;
+  std::vector<float*> tofree_;
 };
 
 }  // namespace RVTensor

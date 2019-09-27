@@ -35,11 +35,11 @@ class CPUActiveOp : public Operation {
   /**
    * relu
    */
-  void relu(uint8_t* input, int size, uint8_t* output);
+  void relu(float* input, int size, float* output);
   /**
    * softmax
    */
-  void softmax(uint8_t* input, int n, uint8_t* output);
+  void softmax(float* input, int n, float* output);
 
   /**
    * inference

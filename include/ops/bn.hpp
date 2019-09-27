@@ -37,13 +37,13 @@ class CPUBnOp : public Operation {
    */
   void forward_compute() override;
 
-  void normalize_cpu(uint8_t *x, float *mean, float *variance, int batch,
+  void normalize_cpu(float *x, float *mean, float *variance, int batch,
                      int filters, int spatial);
-  void scale_bias(uint8_t *output, float *scales, int batch, int n, int size);
+  void scale_bias(float *output, float *scales, int batch, int n, int size);
 
-  void add_bias(uint8_t *output, uint8_t *biases, int batch, int n, int size);
+  void add_bias(float *output, float *biases, int batch, int n, int size);
 
-  void copy_cpu(int N, uint8_t *X, int INCX, uint8_t *Y, int INCY);
+  void copy_cpu(int N, float *X, int INCX, float *Y, int INCY);
 
  private:
   /// bn paramter

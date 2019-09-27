@@ -41,30 +41,30 @@ class CPUFusionCBAOp : public Operation {
   /**
    * 卷积
    */
-  void coppersmith_winograd(uint8_t* matA, uint8_t* matB, uint8_t* matC, int M,
+  void coppersmith_winograd(float* matA, float* matB, float* matC, int M,
                             int N, int K, int strideA, int strideB,
                             int strideC);
 
-  float im2col_get_pixel(uint8_t* im, int height, int width, int channels,
+  float im2col_get_pixel(float* im, int height, int width, int channels,
                          int row, int col, int channel, int pad);
 
-  void im2col_cpu(uint8_t* data_im, int channels, int height, int width,
-                  int ksize, int stride, int pad, uint8_t* data_col);
+  void im2col_cpu(float* data_im, int channels, int height, int width,
+                  int ksize, int stride, int pad, float* data_col);
 
-  void mm_generate(uint8_t* matA, uint8_t* matB, uint8_t* matC, const int M,
+  void mm_generate(float* matA, float* matB, float* matC, const int M,
                    const int N, const int K, const int strideA,
                    const int strideB, const int strideC);
   // BN
-  void normalize_cpu(uint8_t* x, float* mean, float* variance, int batch,
+  void normalize_cpu(float* x, float* mean, float* variance, int batch,
                      int filters, int spatial);
-  void scale_bias(uint8_t* output, float* scales, int batch, int n, int size);
+  void scale_bias(float* output, float* scales, int batch, int n, int size);
 
-  void add_bias(uint8_t* output, uint8_t* biases, int batch, int n, int size);
+  void add_bias(float* output, float* biases, int batch, int n, int size);
 
-  void copy_cpu(int N, uint8_t* X, int INCX, uint8_t* Y, int INCY);
+  void copy_cpu(int N, float* X, int INCX, float* Y, int INCY);
 
   // 激活
-  void relu(uint8_t* input, int size, uint8_t* output);
+  void relu(float* input, int size, float* output);
   /**
    * inference
    */
