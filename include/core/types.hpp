@@ -27,6 +27,8 @@ struct ConvParam {
 };
 
 struct BatchNormParam {
+  std::vector<float> gamma;
+  std::vector<float> beta;
   std::vector<float> mean;
   std::vector<float> variance;
   float epsilon;
@@ -34,6 +36,7 @@ struct BatchNormParam {
 
 enum ActiveType {
   ACTIVE_SIGMOID = 0,
+  ACTIVE_RELU = 1,
 };
 
 }  // namespace RVTensor

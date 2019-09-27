@@ -26,7 +26,7 @@ CPUFusionCBAOp::sptr CPUFusionCBAOp::create(
 inline CPUFusionCBAOp::CPUFusionCBAOp()
     : Operation({}, {}),
       conv_param_({0, 0, 1, 1, 0, 0, false}),
-      bn_param_({{}, {}, 0.001}),
+      bn_param_({{}, {}, {}, {}, 0.001}),
       active_type_(ACTIVE_SIGMOID),
       weight_(nullptr),
       bias_(nullptr) {}
@@ -54,10 +54,10 @@ inline void CPUFusionCBAOp::forward_compute() {
   uint8_t* bias = bias_ ? reinterpret_cast<uint8_t*>(bias_->data_ptr) : nullptr;
 
   // TODO: complete it
-  // TODO: create tmp_output1 as output. 
+  // TODO: create tmp_output1 as output.
   auto conv = CPUConvOp::create(conv_param_, input_tensor, output_tensor, weight_, bias_);
   conv->forward_compute();
-  // TODO: create tmp_output2 as output. 
+  // TODO: create tmp_output2 as output.
   auto bn = CPUBnOp::create(bn_param_, input_tensor, output_tensor);
   bn->forward_compute();
   auto act = CPUActiveOp::create(active_type_, input_tensor, output_tensor);

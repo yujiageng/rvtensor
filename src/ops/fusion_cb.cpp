@@ -25,7 +25,7 @@ CPUFusionCBOp::sptr CPUFusionCBOp::create(
 inline CPUFusionCBOp::CPUFusionCBOp()
     : Operation({}, {}),
       conv_param_({0, 0, 1, 1, 0, 0, false}),
-      bn_param_({{}, {}, 0.001}),
+      bn_param_({{}, {}, {}, {}, 0.001}),
       weight_(nullptr),
       bias_(nullptr) {}
 

@@ -12,6 +12,18 @@
 #include <vector>
 #include "include/core/tensor.hpp"
 #include "include/net/net.hpp"
+#include "include/core/tensor.hpp"
+#include "include/ops/accelerationconv.hpp"
+#include "include/ops/active.hpp"
+#include "include/ops/add.hpp"
+#include "include/ops/avpooling.hpp"
+#include "include/ops/bn.hpp"
+#include "include/ops/conv.hpp"
+#include "include/ops/fc.hpp"
+#include "include/ops/flatten.hpp"
+#include "include/ops/fusion_cb.hpp"
+#include "include/ops/fusion_cba.hpp"
+
 
 namespace RVTensor {
 
@@ -80,6 +92,20 @@ class Executor {
     /// network
     Net::sptr network_ptr;
     /// for resnet20
+    RamTensor::sptr temp_0;
+    RamTensor::sptr temp_1;
+    RamTensor::sptr temp_2;
+    CPUFusionCBAOp::sptr cba1_1;
+    FlashTensor::sptr conv1_weight_ptr;
+    FlashTensor::sptr conv1_bias_ptr;
+    CPUFusionCBAOp::sptr cba2_2;
+    FlashTensor::sptr conv2_weight_ptr;
+    FlashTensor::sptr conv2_bias_ptr;
+    CPUFusionCBOp::sptr cb3_3;
+    FlashTensor::sptr conv3_weight_ptr;
+    FlashTensor::sptr conv3_bias_ptr;
+    CPUAddOp::sptr add1_4;
+    CPUActiveOp::sptr ac3_5;
 
 };
 

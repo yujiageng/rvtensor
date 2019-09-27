@@ -18,7 +18,8 @@ CPUBnOp::sptr CPUBnOp::create(BatchNormParam bn_param, RamTensor::sptr input,
   return ptr;
 }
 
-inline CPUBnOp::CPUBnOp() : Operation({}, {}), param_({{}, {}, 0.001}),weight_(nullptr),bias_(nullptr),scales_(nullptr) {}
+inline CPUBnOp::CPUBnOp() : Operation({}, {}), param_({{}, {}, {}, {}, 0.001}),
+                            weight_(nullptr),bias_(nullptr),scales_(nullptr) {}
 
 inline CPUBnOp::CPUBnOp(BatchNormParam bn_param, RamTensor::sptr input,
                         RamTensor::sptr output)
