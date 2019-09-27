@@ -10,10 +10,12 @@ class ResnetModel
 {
     public:
         hid_t file;
+        float* weight;
+        int* weight_size;
 
         void openModelFile(const char* filename);
         void close_ModelFile();
-        float* getWeightByID(const char* weightID, int* size);
+        void getWeightByID(const char* weightID);
 };
 
 #endif

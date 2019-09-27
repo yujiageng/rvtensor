@@ -15,15 +15,15 @@ using std::endl;
 void ResnetModel::openModelFile(const char* filename)
 {  
    file = H5Fopen (filename, H5F_ACC_RDONLY, H5P_DEFAULT);
-
 }
 void ResnetModel::close_ModelFile()
 {
    H5Fclose(file);
+   free(weight_size);
+   free(weight);
 }
-float* ResnetModel::getWeightByID(const char* weightID, int* size)
+void ResnetModel::getWeightByID(const char* weightID)
 {
-   float *rdata;
    int ndims,n,i;
    hid_t space, dset;
    herr_t status;
@@ -36,11 +36,11 @@ float* ResnetModel::getWeightByID(const char* weightID, int* size)
    {
          n = n*(int)dims[i];
    }
-   size[0] = n;
-   rdata = (float *) malloc (n * sizeof (float));
-   status = H5Dread (dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rdata);
+   weight_size = (int *) malloc (sizeof (int));
+   weight_size[0] = n;
+   weight = (float *) malloc (n * sizeof (float));
+   status = H5Dread (dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, weight);
    status = H5Dclose (dset);
    status = H5Sclose (space);
-   return rdata;
 }
 
