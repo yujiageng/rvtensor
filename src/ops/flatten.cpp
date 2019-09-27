@@ -30,8 +30,8 @@ inline void CPUFlattenOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
-  uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
+  float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
+  float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
 
   int batch = input_tensor->n_batch;
   int channel = input_tensor->channel;

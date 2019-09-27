@@ -33,11 +33,11 @@ inline void CPUFCOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t *input = reinterpret_cast<uint8_t *>(input_tensor->data_ptr);
-  uint8_t *output = reinterpret_cast<uint8_t *>(output_tensor->data_ptr);
-  uint8_t *weight = reinterpret_cast<uint8_t *>(weight_->data_ptr);
-  uint8_t *bias =
-      bias_ ? reinterpret_cast<uint8_t *>(bias_->data_ptr) : nullptr;
+  float *input = reinterpret_cast<float *>(input_tensor->data_ptr);
+  float *output = reinterpret_cast<float *>(output_tensor->data_ptr);
+  float *weight = reinterpret_cast<float *>(weight_->data_ptr);
+  float *bias =
+      bias_ ? reinterpret_cast<float *>(bias_->data_ptr) : nullptr;
 
   // TODO: complete it
   int m = input_tensor->n_batch;
@@ -50,13 +50,13 @@ inline void CPUFCOp::forward_compute() {
 
   softmax(output, n);
 }
-inline void CPUFCOp::multl(int M, int N, int K, uint8_t *A, int lda, uint8_t *B,
-                           int ldb, uint8_t *C, int ldc) {
+inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
+                           int ldb, float *C, int ldc) {
   int i, j, k;
   // M=batch，每个样本有N个输出
   for (i = 0; i < M; ++i) {
     for (j = 0; j < N; ++j) {
-      uint8_t sum = 0;
+      float sum = 0;
       // K是inputs，即输入个数
       for (k = 0; k < K; ++k) {
         //输入项和权重项对应相乘相加
@@ -66,7 +66,7 @@ inline void CPUFCOp::multl(int M, int N, int K, uint8_t *A, int lda, uint8_t *B,
     }
   }
 }
-inline void CPUFCOp::softmax(uint8_t *input, int n) {
+inline void CPUFCOp::softmax(float *input, int n) {
   int i;
   float sum = 0;
   float largest = 0;
@@ -82,7 +82,7 @@ inline void CPUFCOp::softmax(uint8_t *input, int n) {
     input[i] /= sum;
   }
 }
-inline void CPUFCOp::add_bias(uint8_t *output, uint8_t *biases, int batch,
+inline void CPUFCOp::add_bias(float *output, float *biases, int batch,
                               int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {

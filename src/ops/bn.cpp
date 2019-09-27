@@ -33,11 +33,11 @@ inline void CPUBnOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t *input = reinterpret_cast<uint8_t *>(input_tensor->data_ptr);
-  uint8_t *output = reinterpret_cast<uint8_t *>(output_tensor->data_ptr);
+  float *input = reinterpret_cast<float *>(input_tensor->data_ptr);
+  float *output = reinterpret_cast<float *>(output_tensor->data_ptr);
 
-  uint8_t *biases =
-      bias_ ? reinterpret_cast<uint8_t *>(bias_->data_ptr) : nullptr;
+  float *biases =
+      bias_ ? reinterpret_cast<float *>(bias_->data_ptr) : nullptr;
   // TODO: complete it
 
   int input_batch = input_tensor->n_batch;
@@ -66,13 +66,13 @@ inline void CPUBnOp::forward_compute() {
   add_bias(output, biases, input_batch, output_c, output_h * output_w);
 }
 
-inline void CPUBnOp::copy_cpu(int N, uint8_t *X, int INCX, uint8_t *Y,
+inline void CPUBnOp::copy_cpu(int N, float *X, int INCX, float *Y,
                               int INCY) {
   int i;
   for (i = 0; i < N; ++i) Y[i * INCY] = X[i * INCX];
 }
 //归一化
-inline void CPUBnOp::normalize_cpu(uint8_t *x, float *mean, float *variance,
+inline void CPUBnOp::normalize_cpu(float *x, float *mean, float *variance,
                                    int batch, int filters, int spatial) {
   int b, f, i;
   for (b = 0; b < batch; ++b) {
@@ -85,7 +85,7 @@ inline void CPUBnOp::normalize_cpu(uint8_t *x, float *mean, float *variance,
     }
   }
 }
-inline void CPUBnOp::scale_bias(uint8_t *output, float *scales, int batch,
+inline void CPUBnOp::scale_bias(float *output, float *scales, int batch,
                                 int n, int size) {
   // scales 全是1
   int i, j, b;
@@ -97,7 +97,7 @@ inline void CPUBnOp::scale_bias(uint8_t *output, float *scales, int batch,
     }
   }
 }
-inline void CPUBnOp::add_bias(uint8_t *output, uint8_t *biases, int batch,
+inline void CPUBnOp::add_bias(float *output, float *biases, int batch,
                               int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {

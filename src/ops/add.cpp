@@ -32,9 +32,9 @@ inline void CPUAddOp::forward_compute() {
   auto input_tensor2 = getInputs()[1];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input1 = reinterpret_cast<uint8_t*>(input_tensor1->data_ptr);
-  uint8_t* input2 = reinterpret_cast<uint8_t*>(input_tensor2->data_ptr);
-  uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
+  float* input1 = reinterpret_cast<float*>(input_tensor1->data_ptr);
+  float* input2 = reinterpret_cast<float*>(input_tensor2->data_ptr);
+  float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
   // 两个feature map x相加
   // TODO: complete it
   int batch1 = input_tensor1->n_batch;
@@ -63,3 +63,23 @@ inline void CPUAddOp::forward_compute() {
 }
 
 }  // namespace RVTensor
+// #include "include/core/tensor.hpp"
+// #include "include/ops/add.hpp"
+// uint8_t g_ai_buf[10000 * 32 * 32 * 3] __attribute__((aligned(128)));
+
+// int main(void) {
+//   auto input1 = RVTensor::RamTensor::create(2, 3, 3, 3);
+//   auto input2 = RVTensor::RamTensor::create(2, 3, 3, 3);
+//   auto output = RVTensor::RamTensor::create(2, 3, 3, 3);
+//   float* data1 = reinterpret_cast<float*>(input1->data_ptr);
+//   memset(data1, 1, 54 * sizeof(float));
+//   float* data2 = reinterpret_cast<float*>(input2->data_ptr);
+//   memset(data2, 2, 54 * sizeof(float));
+//   float* data3 = reinterpret_cast<float*>(output->data_ptr);
+//   memset(data3, 0, 54 * sizeof(float));
+
+//   auto conv = RVTensor::CPUAddOp::create(input1, input2, output);
+//   for (int i = 0; i < output->count(); i++) {
+//     printf(" %f \n", data3[i]);
+//   }
+// }

@@ -34,8 +34,8 @@ inline void CPUActiveOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
-  uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
+  float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
+  float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
 
   // TODO: complete it
   if (!param_) {
@@ -44,7 +44,7 @@ inline void CPUActiveOp::forward_compute() {
     relu(input, input_tensor->trueSize(), output);
   }
 }
-void CPUActiveOp::relu(uint8_t* inputs, int n, uint8_t* outputs) {
+void CPUActiveOp::relu(float* inputs, int n, float* outputs) {
   int i;
   for (i = 0; i < n; ++i) {
     if (inputs[i] > 0) {
@@ -54,7 +54,7 @@ void CPUActiveOp::relu(uint8_t* inputs, int n, uint8_t* outputs) {
     }
   }
 }
-void CPUActiveOp::softmax(uint8_t* input, int n, uint8_t* output) {
+void CPUActiveOp::softmax(float* input, int n, float* output) {
   int i;
   float sum = 0;
   float largest = 0;

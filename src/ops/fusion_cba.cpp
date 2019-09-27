@@ -48,10 +48,10 @@ inline void CPUFusionCBAOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
-  uint8_t* output = reinterpret_cast<uint8_t*>(output_tensor->data_ptr);
-  uint8_t* weight = reinterpret_cast<uint8_t*>(weight_->data_ptr);
-  uint8_t* bias = bias_ ? reinterpret_cast<uint8_t*>(bias_->data_ptr) : nullptr;
+  float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
+  float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
+  float* weight = reinterpret_cast<float*>(weight_->data_ptr);
+  float* bias = bias_ ? reinterpret_cast<float*>(bias_->data_ptr) : nullptr;
   // // TODO: complete it
   // auto tmp_output1 = output_tensor;
   // auto tmp_output2 = output_tensor;
@@ -97,13 +97,13 @@ inline void CPUFusionCBAOp::forward_compute() {
   /*循环batch中的每个输入*/
   for (int i = 0; i < ni; ++i) {
     /*用于存储经im2col转换后的输入特征矩阵*/
-    uint8_t* a = (uint8_t*)calloc(1024, sizeof(uint8_t));
+    float* a = (float*)calloc(1024, sizeof(float));
 
     /*a是指向当前层所有卷积核的*/
-    uint8_t* b = weight;
+    float* b = weight;
     /*输出特征图个数*/
-    uint8_t* c = output + i * n * m;
-    uint8_t* im = input + i * ci * hi * wi;
+    float* c = output + i * n * m;
+    float* im = input + i * ci * hi * wi;
     /*如果是1*1的卷积，那么不用对输入特征进行转化*/
     if (kh * kw == 1) {
       a = im;
@@ -120,7 +120,7 @@ inline void CPUFusionCBAOp::forward_compute() {
   */
   auto temp_bn_tensor = output_tensor;
 
-  uint8_t* temp_bn_input = reinterpret_cast<uint8_t*>(temp_bn_tensor->data_ptr);
+  float* temp_bn_input = reinterpret_cast<float*>(temp_bn_tensor->data_ptr);
   /*BN  */
   copy_cpu(temp_bn_tensor->count(), temp_bn_input, 1, output, 1);
   // 归一化
@@ -130,11 +130,11 @@ inline void CPUFusionCBAOp::forward_compute() {
   add_bias(output, bias, ni, co, ho * wo);
   /*激活  */
   auto temp_ac_tensor = output_tensor;
-  uint8_t* temp_ac_input = reinterpret_cast<uint8_t*>(temp_ac_tensor->data_ptr);
+  float* temp_ac_input = reinterpret_cast<float*>(temp_ac_tensor->data_ptr);
   relu(temp_ac_input, temp_ac_tensor->count(), output);
 }
-inline void CPUFusionCBAOp::mm_generate(uint8_t* matA, uint8_t* matB,
-                                        uint8_t* matC, const int M, const int N,
+inline void CPUFusionCBAOp::mm_generate(float* matA, float* matB,
+                                        float* matC, const int M, const int N,
                                         const int K, const int strideA,
                                         const int strideB, const int strideC) {
   //    printf("into mm_generate\n");
@@ -147,21 +147,21 @@ inline void CPUFusionCBAOp::mm_generate(uint8_t* matA, uint8_t* matB,
     }
   }
 }
-inline void CPUFusionCBAOp::coppersmith_winograd(uint8_t* matA, uint8_t* matB,
-                                                 uint8_t* matC, int M, int N,
+inline void CPUFusionCBAOp::coppersmith_winograd(float* matA, float* matB,
+                                                 float* matC, int M, int N,
                                                  int K, int strideA,
                                                  int strideB, int strideC) {
   // step 1:使用普通的矩阵
   if ((M <= 64) || (M % 2 != 0 || N % 2 != 0 || K % 2 != 0)) {
     return mm_generate(matA, matB, matC, M, N, K, strideA, strideB, strideC);
   }
-  // matC = calloc(M * strideC, sizeof(uint8_t));
+  // matC = calloc(M * strideC, sizeof(float));
   int offset = 0;
 
-  uint8_t* S1 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
-  uint8_t* S2 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
-  uint8_t* S3 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
-  uint8_t* S4 = (uint8_t*)calloc((M / 2) * (K / 2), sizeof(uint8_t));
+  float* S1 = (float*)calloc((M / 2) * (K / 2), sizeof(float));
+  float* S2 = (float*)calloc((M / 2) * (K / 2), sizeof(float));
+  float* S3 = (float*)calloc((M / 2) * (K / 2), sizeof(float));
+  float* S4 = (float*)calloc((M / 2) * (K / 2), sizeof(float));
   for (int i = 0; i < M / 2; i++) {
     for (int j = 0; j < K / 2; j++) {
       const int idx = i * K / 2 + j;
@@ -176,10 +176,10 @@ inline void CPUFusionCBAOp::coppersmith_winograd(uint8_t* matA, uint8_t* matB,
       S4[idx] = matA[i * strideA + j + K / 2] - S2[idx];
     }
   }
-  uint8_t* T1 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
-  uint8_t* T2 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
-  uint8_t* T3 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
-  uint8_t* T4 = (uint8_t*)calloc((K / 2) * (N / 2), sizeof(uint8_t));
+  float* T1 = (float*)calloc((K / 2) * (N / 2), sizeof(float));
+  float* T2 = (float*)calloc((K / 2) * (N / 2), sizeof(float));
+  float* T3 = (float*)calloc((K / 2) * (N / 2), sizeof(float));
+  float* T4 = (float*)calloc((K / 2) * (N / 2), sizeof(float));
   for (int i = 0; i < K / 2; i++) {
     for (int j = 0; j < N / 2; j++) {
       const int idx = i * N / 2 + j;
@@ -196,47 +196,47 @@ inline void CPUFusionCBAOp::coppersmith_winograd(uint8_t* matA, uint8_t* matB,
   }
 
   // M1 = A11*B11
-  uint8_t* M1 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M1 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(matA, matB, M1, M / 2, N / 2, K / 2, strideA, strideB,
                          N / 2);
   }
 
   // M2 = A12*B21
-  uint8_t* M2 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M2 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(matA + K / 2, matB + K * strideB / 2, M2, M / 2, N / 2,
                          K / 2, strideA, strideB, N / 2);
   }
 
   // M3 = S4*B22
-  uint8_t* M3 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M3 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(S4, matB + K * strideB / 2 + N / 2, M3, M / 2, N / 2,
                          K / 2, K / 2, strideB, N / 2);
   }
 
   // M4 = A22*T4
-  uint8_t* M4 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M4 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(matA + M * strideA / 2 + K / 2, T4, M4, M / 2, N / 2,
                          K / 2, strideA, N / 2, N / 2);
   }
 
   // M5 = S1*T1
-  uint8_t* M5 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M5 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(S1, T1, M5, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
   }
 
   // M6 = S2*T2
-  uint8_t* M6 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M6 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(S2, T2, M6, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
   }
 
   // M7 = S3*T3
-  uint8_t* M7 = (uint8_t*)calloc((M / 2) * (N / 2), sizeof(uint8_t));
+  float* M7 = (float*)calloc((M / 2) * (N / 2), sizeof(float));
   {
     coppersmith_winograd(S3, T3, M7, M / 2, N / 2, K / 2, K / 2, N / 2, N / 2);
   }
@@ -270,7 +270,7 @@ inline void CPUFusionCBAOp::coppersmith_winograd(uint8_t* matA, uint8_t* matB,
   }
 }
 
-inline float CPUFusionCBAOp::im2col_get_pixel(uint8_t* im, int height,
+inline float CPUFusionCBAOp::im2col_get_pixel(float* im, int height,
                                               int width, int channels, int row,
                                               int col, int channel, int pad) {
   row -= pad;
@@ -280,9 +280,9 @@ inline float CPUFusionCBAOp::im2col_get_pixel(uint8_t* im, int height,
   return im[col + width * (row + height * channel)];
 }
 
-inline void CPUFusionCBAOp::im2col_cpu(uint8_t* data_im, int channels,
+inline void CPUFusionCBAOp::im2col_cpu(float* data_im, int channels,
                                        int height, int width, int ksize,
-                                       int stride, int pad, uint8_t* data_col) {
+                                       int stride, int pad, float* data_col) {
   int c, h, w;
   // 计算卷基层输出图像的高 和宽
   int height_col = (height + 2 * pad - ksize) / stride + 1;
@@ -307,13 +307,13 @@ inline void CPUFusionCBAOp::im2col_cpu(uint8_t* data_im, int channels,
   }
 }
 
-inline void CPUFusionCBAOp::copy_cpu(int N, uint8_t* X, int INCX, uint8_t* Y,
+inline void CPUFusionCBAOp::copy_cpu(int N, float* X, int INCX, float* Y,
                                      int INCY) {
   int i;
   for (i = 0; i < N; ++i) Y[i * INCY] = X[i * INCX];
 }
 //归一化
-inline void CPUFusionCBAOp::normalize_cpu(uint8_t* x, float* mean,
+inline void CPUFusionCBAOp::normalize_cpu(float* x, float* mean,
                                           float* variance, int batch,
                                           int filters, int spatial) {
   int b, f, i;
@@ -327,7 +327,7 @@ inline void CPUFusionCBAOp::normalize_cpu(uint8_t* x, float* mean,
     }
   }
 }
-inline void CPUFusionCBAOp::scale_bias(uint8_t* output, float* scales,
+inline void CPUFusionCBAOp::scale_bias(float* output, float* scales,
                                        int batch, int n, int size) {
   // scales 全是1
   int i, j, b;
@@ -339,7 +339,7 @@ inline void CPUFusionCBAOp::scale_bias(uint8_t* output, float* scales,
     }
   }
 }
-inline void CPUFusionCBAOp::add_bias(uint8_t* output, uint8_t* biases,
+inline void CPUFusionCBAOp::add_bias(float* output, float* biases,
                                      int batch, int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {
@@ -350,7 +350,7 @@ inline void CPUFusionCBAOp::add_bias(uint8_t* output, uint8_t* biases,
     }
   }
 }
-void CPUFusionCBAOp::relu(uint8_t* inputs, int n, uint8_t* outputs) {
+void CPUFusionCBAOp::relu(float* inputs, int n, float* outputs) {
   int i;
   for (i = 0; i < n; ++i) {
     if (inputs[i] > 0) {
