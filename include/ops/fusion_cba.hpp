@@ -22,7 +22,7 @@ class CPUFusionCBAOp : public Operation {
  public:
   using sptr = std::shared_ptr<CPUFusionCBAOp>;
   static sptr create();
-  static sptr create(ConvParam conv_param, BatchNormParam bn_param,
+  static sptr create(ConvParam conv_param, BnModelData bn_param,
                      ActiveType active_type, RamTensor::sptr input,
                      RamTensor::sptr output, FlashTensor::sptr weight,
                      FlashTensor::sptr bias = nullptr);
@@ -31,7 +31,7 @@ class CPUFusionCBAOp : public Operation {
    * Constructor & Deconstructor
    */
   CPUFusionCBAOp();
-  CPUFusionCBAOp(ConvParam conv_param, BatchNormParam bn_param,
+  CPUFusionCBAOp(ConvParam conv_param, BnModelData bn_param,
                  ActiveType active_type, RamTensor::sptr input,
                  RamTensor::sptr output, FlashTensor::sptr weight,
                  FlashTensor::sptr bias = nullptr);
@@ -73,8 +73,8 @@ class CPUFusionCBAOp : public Operation {
  private:
   /// conv paramter
   ConvParam conv_param_;
-  /// batch norm paramter
-  BatchNormParam bn_param_;
+  /// bn paramter
+  BnModelData bn_param_;
   /// active type
   ActiveType active_type_;
   /// model data: weight

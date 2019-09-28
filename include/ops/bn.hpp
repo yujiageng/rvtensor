@@ -20,14 +20,14 @@ class CPUBnOp : public Operation {
  public:
   using sptr = std::shared_ptr<CPUBnOp>;
   static sptr create();
-  static sptr create(BatchNormParam bn_param, RamTensor::sptr input,
+  static sptr create(BnModelData bn_param, RamTensor::sptr input,
                      RamTensor::sptr output);
 
   /**
    * Constructor & Deconstructor
    */
   CPUBnOp();
-  CPUBnOp(BatchNormParam bn_param, RamTensor::sptr input,
+  CPUBnOp(BnModelData bn_param, RamTensor::sptr input,
           RamTensor::sptr output);
   ~CPUBnOp();
   CPUBnOp &operator=(const CPUBnOp &bn_op);
@@ -47,7 +47,7 @@ class CPUBnOp : public Operation {
 
  private:
   /// bn paramter
-  BatchNormParam param_;
+  BnModelData param_;
   /// model data: weight
   FlashTensor::sptr weight_;
   /// model data: bias

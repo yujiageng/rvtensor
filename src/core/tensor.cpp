@@ -98,7 +98,7 @@ inline FlashTensor::~FlashTensor() {
   data_ptr = nullptr;
 }
 
-inline void FlashTensor::bindData(void* data, size_t size) {
+void FlashTensor::bindModelData(void* data, size_t size) {
   if (size == trueSize() && data_ptr == nullptr)
     data_ptr = data;
   else

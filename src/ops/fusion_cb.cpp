@@ -14,7 +14,7 @@ CPUFusionCBOp::sptr CPUFusionCBOp::create() {
 }
 
 CPUFusionCBOp::sptr CPUFusionCBOp::create(
-    ConvParam conv_param, BatchNormParam bn_param, RamTensor::sptr input,
+    ConvParam conv_param, BnModelData bn_param, RamTensor::sptr input,
     RamTensor::sptr output, FlashTensor::sptr weight, FlashTensor::sptr bias) {
   CPUFusionCBOp::sptr ptr = std::make_shared<CPUFusionCBOp>(
       conv_param, bn_param, input, output, weight, bias);
@@ -25,12 +25,12 @@ CPUFusionCBOp::sptr CPUFusionCBOp::create(
 inline CPUFusionCBOp::CPUFusionCBOp()
     : Operation({}, {}),
       conv_param_({0, 0, 1, 1, 0, 0, false}),
-      bn_param_({{}, {}, {}, {}, 0.001}),
+      bn_param_({nullptr, nullptr, nullptr, nullptr}),
       weight_(nullptr),
       bias_(nullptr) {}
 
 inline CPUFusionCBOp::CPUFusionCBOp(
-    ConvParam conv_param, BatchNormParam bn_param, RamTensor::sptr input,
+    ConvParam conv_param, BnModelData bn_param, RamTensor::sptr input,
     RamTensor::sptr output, FlashTensor::sptr weight, FlashTensor::sptr bias)
     : Operation({input}, {output}),
       conv_param_(conv_param),
@@ -76,8 +76,8 @@ inline void CPUFusionCBOp::forward_compute() {
   int pw = conv_param_.pw;
 
   // bn_param;
-  std::vector<float> mean = bn_param_.mean;
-  std::vector<float> variance = bn_param_.variance;
+  float* mean = (float*)(bn_param_.bn_mean_ptr->data_ptr);
+  float* variance = (float*)(bn_param_.bn_variance_ptr->data_ptr);
   float* scales = (float*)calloc(co, sizeof(float));
   // 卷积核的个数 = 输出的通道数
   int m = output_tensor->channel;

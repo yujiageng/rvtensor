@@ -11,17 +11,18 @@ namespace RVTensor {
 
 CPUBnOp::sptr CPUBnOp::create() { return std::make_shared<CPUBnOp>(); }
 
-CPUBnOp::sptr CPUBnOp::create(BatchNormParam bn_param, RamTensor::sptr input,
+CPUBnOp::sptr CPUBnOp::create(BnModelData bn_param, RamTensor::sptr input,
                               RamTensor::sptr output) {
   CPUBnOp::sptr ptr = std::make_shared<CPUBnOp>(bn_param, input, output);
   // ptr->checkOutputDims();
   return ptr;
 }
 
-inline CPUBnOp::CPUBnOp() : Operation({}, {}), param_({{}, {}, {}, {}, 0.001}),
+inline CPUBnOp::CPUBnOp() : Operation({}, {}),
+                            param_({nullptr, nullptr, nullptr, nullptr}),
                             weight_(nullptr),bias_(nullptr),scales_(nullptr) {}
 
-inline CPUBnOp::CPUBnOp(BatchNormParam bn_param, RamTensor::sptr input,
+inline CPUBnOp::CPUBnOp(BnModelData bn_param, RamTensor::sptr input,
                         RamTensor::sptr output)
     : Operation({input}, {output}), param_(bn_param) {}
 
@@ -50,8 +51,8 @@ inline void CPUBnOp::forward_compute() {
   int output_h = output_tensor->height;
   int output_w = output_tensor->width;
   // bn_param;
-  std::vector<float> mean = param_.mean;
-  std::vector<float> variance = param_.variance;
+  float* mean = (float*)(param_.bn_mean_ptr->data_ptr);
+  float* variance = (float*)(param_.bn_variance_ptr->data_ptr);
   float *scales = (float*)calloc(output_c, sizeof(float));
   if (!scales) { scales_ = scales;}
 

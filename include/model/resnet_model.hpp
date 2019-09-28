@@ -30,17 +30,17 @@ class ResnetModelData
     ResnetModelData& operator=(const ResnetModelData& m);
 
     void openModelFile(const char* filename);
-    void close_ModelFile();
-    bn_model_data getBatchNormModelData(int index);
-    conv_model_data getConvModelData(int index);
-    conv_model_data getDenseModelData();
+    void closeModelFile();
+    BnModelData getBatchNormModelData(int index);
+    ConvModelData getConvModelData(int index);
+    ConvModelData getDenseModelData();
 
  private:
     hid_t file;
     float* getWeightByID(const char* weightID, int* count);
-    std::vector<bn_model_data> bn_model_datas;
-    std::vector<conv_model_data> conv_model_datas;
-    conv_model_data dense_model_data;
+    std::vector<BnModelData> bn_model_datas;
+    std::vector<ConvModelData> conv_model_datas;
+    ConvModelData dense_model_data;
 };
 
 }  // namespace RVTensor

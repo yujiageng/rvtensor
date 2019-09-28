@@ -23,11 +23,15 @@ Executor::Executor() {}
 Executor::Executor(std::string model_name, int thread_num)
                   : thread_num_(thread_num), model_name(model_name),
                   image_ptr(nullptr), output_ptr(nullptr) {
+    resnet_model_data_ptr = ResnetModelData::create();
+    resnet_model_data_ptr->openModelFile(model_name.c_str());
 }
 
 void Executor::parseModel() {
 
     int n_batch = 500;
+    ConvModelData conv_data;
+    BnModelData bn_data;
 
     temp_0 = RamTensor::create(n_batch, 32, 32, 16, 4u);
     temp_1 = RamTensor::create(n_batch, 32, 32, 16, 4u);
@@ -35,36 +39,30 @@ void Executor::parseModel() {
 
     // conv1 + bn1 + at1
     ConvParam conv1_param({1, 1, 1, 1, 0, 0, 0});
-    BatchNormParam bn1_param({{}, {}, {}, {}, 0.001});
-    conv1_weight_ptr = FlashTensor::create(3, 3, 3, 16, 4u);
-    conv1_bias_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
-    // conv1_weight_ptr->bindData(weight_data, size);
-    // conv1_bias_ptr->bindData(bias_data, size);
-    cba1_1 = CPUFusionCBAOp::create(conv1_param, bn1_param, ACTIVE_RELU,
-                                  image_ptr, temp_0,
-                                  conv1_weight_ptr, conv1_bias_ptr);
+    conv_data = resnet_model_data_ptr->getConvModelData(1);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(1);
+    cba1_1 = CPUFusionCBAOp::create(conv1_param, bn_data, ACTIVE_RELU,
+                                    image_ptr, temp_0,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
 
     // conv2 + bn2 + at2
     ConvParam conv2_param({1, 1, 1, 1, 0, 0, 0});
-    BatchNormParam bn2_param({{}, {}, {}, {}, 0.001});
-    conv2_weight_ptr = FlashTensor::create(3, 3, 3, 16, 4u);
-    conv2_bias_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
-    // conv2_weight_ptr->bindData(weight_data, size);
-    // conv2_bias_ptr->bindData(bias_data, size);
-    cba2_2 = CPUFusionCBAOp::create(conv2_param, bn2_param, ACTIVE_RELU,
-                                  temp_0, temp_1,
-                                  conv2_weight_ptr, conv2_bias_ptr);
+    conv_data = resnet_model_data_ptr->getConvModelData(2);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(2);
+    cba2_2 = CPUFusionCBAOp::create(conv2_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
 
     // conv3 + bn3
     ConvParam conv3_param({1, 1, 1, 1, 0, 0, 0});
-    BatchNormParam bn3_param({{}, {}, {}, {}, 0.001});
-    conv3_weight_ptr = FlashTensor::create(3, 3, 3, 16, 4u);
-    conv3_bias_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
-    // conv3_weight_ptr->bindData(weight_data, size);
-    // conv3_bias_ptr->bindData(bias_data, size);
-    cb3_3 = CPUFusionCBOp::create(conv3_param, bn3_param,
-                                 temp_1, temp_2,
-                                 conv3_weight_ptr, conv3_bias_ptr);
+    conv_data = resnet_model_data_ptr->getConvModelData(3);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(3);
+    cb3_3 = CPUFusionCBOp::create(conv3_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
     // add1
     add1_4 = CPUAddOp::create(temp_0, temp_2, temp_1);
 
@@ -92,6 +90,8 @@ int Executor::inferenceResult() {
     return 0;
 }
 
-Executor::~Executor() {}
+Executor::~Executor() {
+    resnet_model_data_ptr->closeModelFile();
+}
 
 }  // namespace RVTensor

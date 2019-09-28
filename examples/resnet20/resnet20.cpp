@@ -16,8 +16,7 @@ int main(void)
     std::string model_name("resnet20");
     std::string input_name("cifar10");
 
-    RVTensor::Executor::sptr sp =
-                       RVTensor::Executor::create(model_name);
+    RVTensor::Executor::sptr sp = RVTensor::Executor::create(model_name);
 
     sp->parseModel();
 

@@ -18,7 +18,6 @@ target_link_libraries(${QEMU_RESNET20_NAME} RVTensor
                 -Wl,--start-group
                 -Wl,--gc-sections
                 m atomic c stdc++ hdf5
-                m atomic c stdc++
                 -Wl,--end-group
                 )
 set_target_properties(${QEMU_RESNET20_NAME} PROPERTIES LINKER_LANGUAGE C)

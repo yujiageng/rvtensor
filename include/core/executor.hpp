@@ -11,7 +11,8 @@
 #include <string>
 #include <vector>
 #include "include/core/tensor.hpp"
-#include "include/core/tensor.hpp"
+#include "include/core/types.hpp"
+#include "include/model/resnet_model.hpp"
 #include "include/ops/accelerationconv.hpp"
 #include "include/ops/active.hpp"
 #include "include/ops/add.hpp"
@@ -88,6 +89,8 @@ class Executor {
     RamTensor::sptr output_ptr;
     /// model_name
     std::string model_name;
+    /// resnet model data
+    ResnetModelData::sptr resnet_model_data_ptr;
     /// for resnet20
     RamTensor::sptr temp_0;
     RamTensor::sptr temp_1;

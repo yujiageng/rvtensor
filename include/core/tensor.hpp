@@ -131,7 +131,7 @@ class FlashTensor : public Tensor {
   /**
    * bind model data to the Tensor
    */
-  void bindData(void* data, size_t size);
+  void bindModelData(void* data, size_t size);
 
   /**
    * get const data reference

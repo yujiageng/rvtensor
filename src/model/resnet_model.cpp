@@ -6,6 +6,7 @@
  */
 
 #include "include/model/resnet_model.hpp"
+#include "include/core/tensor.hpp"
 
 namespace RVTensor {
 
@@ -73,7 +74,7 @@ void ResnetModelData::openModelFile(const char* filename) {
    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 }
 
-void ResnetModelData::close_ModelFile() {
+void ResnetModelData::closeModelFile() {
    H5Fclose(file);
 }
 
@@ -97,60 +98,68 @@ float* ResnetModelData::getWeightByID(const char* weightID, int* count) {
    return weight;
 }
 
-bn_model_data ResnetModelData::getBatchNormModelData(int index) {
+BnModelData ResnetModelData::getBatchNormModelData(int index) {
    char buf[90];
    int count;
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/beta:0",
            index, index);
    float* beta = getWeightByID(buf, &count);
-   bn_model_datas[index - 1].bn_beta_ptr->bindData(beta, count * sizeof(float));
+   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+                                   (void*)beta, count * sizeof(float));
 
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/gamma:0",
            index, index);
    float* gamma = getWeightByID(buf, &count);
-   bn_model_datas[index - 1].bn_beta_ptr->bindData(gamma, count * sizeof(float));
+   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+                                   (void*)gamma, count * sizeof(float));
 
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/moving_mean:0",
            index, index);
    float* mean = getWeightByID(buf, &count);
-   bn_model_datas[index - 1].bn_beta_ptr->bindData(mean, count * sizeof(float));
+   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+                                   (void*)mean, count * sizeof(float));
 
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/moving_variance:0",
            index, index);
    float* variance = getWeightByID(buf, &count);
-   bn_model_datas[index - 1].bn_beta_ptr->bindData(variance, count * sizeof(float));
+   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+                                   (void*)variance, count * sizeof(float));
 
    return bn_model_datas[index - 1];
 }
 
-conv_model_data ResnetModelData::getConvModelData(int index) {
+ConvModelData ResnetModelData::getConvModelData(int index) {
    char buf[90];
    int count;
    sprintf(buf, "model_weights/conv2d_%d/conv2d_%d/kernel:0", index, index);
    float* kernel = getWeightByID(buf, &count);
-   conv_model_datas[index - 1].conv_kernel_ptr->bindData(kernel, count * sizeof(float));
+   conv_model_datas[index - 1].conv_kernel_ptr->bindModelData(
+                                    (void*)kernel, count * sizeof(float));
 
    sprintf(buf, "model_weights/conv2d_%d/conv2d_%d/bias:0", index, index);
    float* bias = getWeightByID(buf, &count);
-   conv_model_datas[index - 1].conv_bias_ptr->bindData(bias, count * sizeof(float));
+   conv_model_datas[index - 1].conv_bias_ptr->bindModelData(
+                                    (void*)bias, count * sizeof(float));
 
    return conv_model_datas[index - 1];
 }
 
-conv_model_data ResnetModelData::getDenseModelData() {
+ConvModelData ResnetModelData::getDenseModelData() {
    char buf[90];
    int count;
    sprintf(buf, "model_weights/dense_1/dense_1/kernel:0");
    float* kernel = getWeightByID(buf, &count);
-   dense_model_data.conv_kernel_ptr->bindData(kernel, count * sizeof(float));
+   dense_model_data.conv_kernel_ptr->bindModelData(
+                                    (void*)kernel, count * sizeof(float));
 
    sprintf(buf, "model_weights/dense_1/dense_1/bias:0");
    float* bias = getWeightByID(buf, &count);
-   dense_model_data.conv_bias_ptr->bindData(bias, count * sizeof(float));
+   dense_model_data.conv_bias_ptr->bindModelData(
+                                    (void*)bias, count * sizeof(float));
 
    return dense_model_data;
 }

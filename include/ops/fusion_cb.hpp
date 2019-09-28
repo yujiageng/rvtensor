@@ -22,7 +22,7 @@ class CPUFusionCBOp : public Operation {
  public:
   using sptr = std::shared_ptr<CPUFusionCBOp>;
   static sptr create();
-  static sptr create(ConvParam conv_param, BatchNormParam bn_param,
+  static sptr create(ConvParam conv_param, BnModelData bn_param,
                      RamTensor::sptr input, RamTensor::sptr output,
                      FlashTensor::sptr weight,
                      FlashTensor::sptr bias = nullptr);
@@ -31,7 +31,7 @@ class CPUFusionCBOp : public Operation {
    * Constructor & Deconstructor
    */
   CPUFusionCBOp();
-  CPUFusionCBOp(ConvParam conv_param, BatchNormParam bn_param,
+  CPUFusionCBOp(ConvParam conv_param, BnModelData bn_param,
                 RamTensor::sptr input, RamTensor::sptr output,
                 FlashTensor::sptr weight, FlashTensor::sptr bias = nullptr);
   ~CPUFusionCBOp();
@@ -70,7 +70,7 @@ class CPUFusionCBOp : public Operation {
   /// conv paramter
   ConvParam conv_param_;
   /// batch norm paramter
-  BatchNormParam bn_param_;
+  BnModelData bn_param_;
   /// model data: weight
   FlashTensor::sptr weight_;
   /// model data: bias
