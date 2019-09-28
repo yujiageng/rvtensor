@@ -9,6 +9,7 @@
 #define INCLUDE_CORE_TYPES_HPP_
 
 #include <vector>
+#include "include/core/tensor.hpp"
 
 namespace RVTensor {
 
@@ -37,6 +38,18 @@ struct BatchNormParam {
 enum ActiveType {
   ACTIVE_SIGMOID = 0,
   ACTIVE_RELU = 1,
+};
+
+struct bn_model_data {
+    FlashTensor::sptr bn_beta_ptr;
+    FlashTensor::sptr bn_gamma_ptr;
+    FlashTensor::sptr bn_mean_ptr;
+    FlashTensor::sptr bn_variance_ptr;
+};
+
+struct conv_model_data {
+    FlashTensor::sptr conv_kernel_ptr;
+    FlashTensor::sptr conv_bias_ptr;
 };
 
 }  // namespace RVTensor

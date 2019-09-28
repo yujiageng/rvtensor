@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 #include "include/core/tensor.hpp"
-#include "include/net/net.hpp"
 #include "include/core/tensor.hpp"
 #include "include/ops/accelerationconv.hpp"
 #include "include/ops/active.hpp"
@@ -89,8 +88,6 @@ class Executor {
     RamTensor::sptr output_ptr;
     /// model_name
     std::string model_name;
-    /// network
-    Net::sptr network_ptr;
     /// for resnet20
     RamTensor::sptr temp_0;
     RamTensor::sptr temp_1;

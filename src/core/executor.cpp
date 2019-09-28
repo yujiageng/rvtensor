@@ -23,7 +23,6 @@ Executor::Executor() {}
 Executor::Executor(std::string model_name, int thread_num)
                   : thread_num_(thread_num), model_name(model_name),
                   image_ptr(nullptr), output_ptr(nullptr) {
-    network_ptr = Net::create(model_name);
 }
 
 void Executor::parseModel() {
@@ -83,7 +82,6 @@ void Executor::loadImage(std::string image_name, uint8_t* ai_buf,
 }
 
 int Executor::compute() {
-    network_ptr->compute({image_ptr});
     return 0;
 }
 
