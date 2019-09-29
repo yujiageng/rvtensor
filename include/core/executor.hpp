@@ -95,18 +95,58 @@ class Executor {
     RamTensor::sptr temp_0;
     RamTensor::sptr temp_1;
     RamTensor::sptr temp_2;
+
     CPUFusionCBAOp::sptr cba1_1;
-    FlashTensor::sptr conv1_weight_ptr;
-    FlashTensor::sptr conv1_bias_ptr;
     CPUFusionCBAOp::sptr cba2_2;
-    FlashTensor::sptr conv2_weight_ptr;
-    FlashTensor::sptr conv2_bias_ptr;
     CPUFusionCBOp::sptr cb3_3;
-    FlashTensor::sptr conv3_weight_ptr;
-    FlashTensor::sptr conv3_bias_ptr;
     CPUAddOp::sptr add1_4;
     CPUActiveOp::sptr ac3_5;
 
+    CPUFusionCBAOp::sptr cba4_6;
+    CPUFusionCBOp::sptr cb5_7;
+    CPUAddOp::sptr add2_8;
+    CPUActiveOp::sptr ac5_9;
+
+    CPUFusionCBAOp::sptr cba6_10;
+    CPUFusionCBOp::sptr cb7_11;
+    CPUAddOp::sptr add3_12;
+    CPUActiveOp::sptr ac7_13;
+
+    CPUFusionCBAOp::sptr cba8_14;
+    CPUFusionCBOp::sptr cb9_15;
+    CPUConvOp::sptr c10_16;
+    CPUAddOp::sptr add4_17;
+    CPUActiveOp::sptr ac9_18;
+
+    CPUFusionCBAOp::sptr cba11_19;
+    CPUFusionCBOp::sptr cb12_20;
+    CPUAddOp::sptr add5_21;
+    CPUActiveOp::sptr ac11_22;
+
+    CPUFusionCBAOp::sptr cba13_23;
+    CPUFusionCBOp::sptr cb14_24;
+    CPUAddOp::sptr add6_25;
+    CPUActiveOp::sptr ac13_26;
+
+    CPUFusionCBAOp::sptr cba15_27;
+    CPUFusionCBOp::sptr cb16_28;
+    CPUConvOp::sptr c17_29;
+    CPUAddOp::sptr add7_30;
+    CPUActiveOp::sptr ac15_31;
+
+    CPUFusionCBAOp::sptr cba18_32;
+    CPUFusionCBOp::sptr cb19_33;
+    CPUAddOp::sptr add8_34;
+    CPUActiveOp::sptr ac17_35;
+
+    CPUFusionCBAOp::sptr cba20_36;
+    CPUFusionCBOp::sptr cb21_37;
+    CPUAddOp::sptr add9_38;
+    CPUActiveOp::sptr ac19_39;
+
+    CPUAVPoolingOp::sptr avpool_40;
+    CPUFlattenOp::sptr flatten_41;
+    CPUFCOp::sptr dense_42;
 };
 
 }  // namespace RVTensor

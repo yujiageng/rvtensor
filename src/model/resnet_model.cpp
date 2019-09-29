@@ -56,6 +56,9 @@ inline ResnetModelData::ResnetModelData() {
     conv_model_datas[16].conv_kernel_ptr = FlashTensor::create(1, 1, 32, 64, 4u);
     conv_model_datas[17].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
     conv_model_datas[18].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
+
+    dense_model_data.conv_kernel_ptr = FlashTensor::create(1, 1, 64, 10, 4u);
+    dense_model_data.conv_bias_ptr = FlashTensor::create(1, 1, 1, 10, 4u);
 }
 
 inline ResnetModelData::~ResnetModelData() {

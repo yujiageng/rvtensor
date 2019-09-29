@@ -38,28 +38,26 @@ void Executor::parseModel() {
     temp_2 = RamTensor::create(n_batch, 32, 32, 16, 4u);
 
     // conv1 + bn1 + at1
-    ConvParam conv1_param({1, 1, 1, 1, 0, 0, 0});
+    ConvParam conv_param = {1, 1, 1, 1, 0, 0, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(1);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(1);
-    cba1_1 = CPUFusionCBAOp::create(conv1_param, bn_data, ACTIVE_RELU,
+    cba1_1 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
                                     image_ptr, temp_0,
                                     conv_data.conv_kernel_ptr,
                                     conv_data.conv_bias_ptr);
 
     // conv2 + bn2 + at2
-    ConvParam conv2_param({1, 1, 1, 1, 0, 0, 0});
     conv_data = resnet_model_data_ptr->getConvModelData(2);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(2);
-    cba2_2 = CPUFusionCBAOp::create(conv2_param, bn_data, ACTIVE_RELU,
+    cba2_2 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
                                     temp_0, temp_1,
                                     conv_data.conv_kernel_ptr,
                                     conv_data.conv_bias_ptr);
 
     // conv3 + bn3
-    ConvParam conv3_param({1, 1, 1, 1, 0, 0, 0});
     conv_data = resnet_model_data_ptr->getConvModelData(3);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(3);
-    cb3_3 = CPUFusionCBOp::create(conv3_param, bn_data,
+    cb3_3 = CPUFusionCBOp::create(conv_param, bn_data,
                                   temp_1, temp_2,
                                   conv_data.conv_kernel_ptr,
                                   conv_data.conv_bias_ptr);
@@ -69,6 +67,214 @@ void Executor::parseModel() {
     // ac3
     ac3_5 = CPUActiveOp::create(ACTIVE_RELU, temp_1, temp_0);
 
+    // conv4 + bn4 + at4
+    conv_data = resnet_model_data_ptr->getConvModelData(4);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(4);
+    cba4_6 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv5 + bn5
+    conv_data = resnet_model_data_ptr->getConvModelData(5);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(5);
+    cb5_7 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add2
+    add2_8 = CPUAddOp::create(temp_0, temp_2, temp_1);
+
+    // ac5
+    ac5_9 = CPUActiveOp::create(ACTIVE_RELU, temp_1, temp_0);
+
+    // conv6 + bn6 + at6
+    conv_data = resnet_model_data_ptr->getConvModelData(6);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(6);
+    cba6_10 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv7 + bn7
+    conv_data = resnet_model_data_ptr->getConvModelData(7);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(7);
+    cb7_11 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add3
+    add3_12 = CPUAddOp::create(temp_0, temp_2, temp_1);
+
+    // ac7
+    ac7_13 = CPUActiveOp::create(ACTIVE_RELU, temp_1, temp_0);
+
+    // conv8 + bn8 + at8
+    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(8);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(8);
+    //resize temp1 to (0, 16, 16, 32)
+    cba8_14 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv9 + bn9
+    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(9);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(9);
+    //resize temp2 to (0, 16, 16, 32)
+    cb9_15 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+
+    // conv10
+    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(10);
+    c10_16 = CPUConvOp::create(conv_param,
+                                  temp_0, temp_1,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+
+    // add4
+    // resize temp0 to (0, 16, 16, 32)
+    add4_17 = CPUAddOp::create(temp_1, temp_2, temp_0);
+
+    // ac9
+    ac9_18 = CPUActiveOp::create(ACTIVE_RELU, temp_0, temp_1);
+
+    // conv11 + bn10 + at10
+    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(11);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(10);
+    cba11_19 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_1, temp_2,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv12 + bn11
+    conv_data = resnet_model_data_ptr->getConvModelData(12);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(11);
+    cb12_20 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_2, temp_0,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add5
+    add5_21 = CPUAddOp::create(temp_0, temp_1, temp_2);
+
+    // ac11
+    ac11_22 = CPUActiveOp::create(ACTIVE_RELU, temp_2, temp_0);
+
+    // conv13 + bn12 + at12
+    conv_data = resnet_model_data_ptr->getConvModelData(13);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(12);
+    cba13_23 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv14 + bn13
+    conv_data = resnet_model_data_ptr->getConvModelData(14);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(13);
+    cb14_24 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add6
+    add6_25 = CPUAddOp::create(temp_0, temp_2, temp_1);
+
+    // ac13
+    ac13_26 = CPUActiveOp::create(ACTIVE_RELU, temp_1, temp_0);
+
+    // conv15 + bn14 + at14
+    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(15);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(14);
+    // resize temp1 to (0, 8, 8, 64)
+    cba15_27 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_0, temp_1,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv16 + bn15
+    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(16);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(15);
+    //resize temp2 to (0, 8, 8, 64)
+    cb16_28 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_1, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+
+    // conv17
+    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(17);
+    c17_29 = CPUConvOp::create(conv_param,
+                                  temp_0, temp_1,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+
+    // add7
+    // resise temp0 to (0, 8, 8, 64)
+    add7_30 = CPUAddOp::create(temp_1, temp_2, temp_0);
+
+    // ac15
+    ac15_31 = CPUActiveOp::create(ACTIVE_RELU, temp_0, temp_1);
+
+    // conv18 + bn16 + at16
+    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_data = resnet_model_data_ptr->getConvModelData(18);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(16);
+    cba18_32 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_1, temp_0,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv19 + bn17
+    conv_data = resnet_model_data_ptr->getConvModelData(19);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(17);
+    cb19_33 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_0, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add8
+    add8_34 = CPUAddOp::create(temp_1, temp_2, temp_0);
+
+    // ac17
+    ac17_35 = CPUActiveOp::create(ACTIVE_RELU, temp_0, temp_1);
+
+    // conv20 + bn18 + at18
+    conv_data = resnet_model_data_ptr->getConvModelData(20);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(18);
+    cba20_36 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
+                                    temp_1, temp_0,
+                                    conv_data.conv_kernel_ptr,
+                                    conv_data.conv_bias_ptr);
+
+    // conv21 + bn19
+    conv_data = resnet_model_data_ptr->getConvModelData(21);
+    bn_data = resnet_model_data_ptr->getBatchNormModelData(19);
+    cb21_37 = CPUFusionCBOp::create(conv_param, bn_data,
+                                  temp_0, temp_2,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+    // add9
+    add9_38 = CPUAddOp::create(temp_1, temp_2, temp_0);
+
+    // ac19
+    ac19_39 = CPUActiveOp::create(ACTIVE_RELU, temp_0, temp_1);
+
+    // av_pool
+    // resize temp_0 to (0, 1, 1, 64)
+    avpool_40 = CPUAVPoolingOp::create(temp_1, temp_0);
+
+    // dense
+    // resize temp2 to (0, 1, 1, 10)
+    conv_data = resnet_model_data_ptr->getDenseModelData();
+    dense_42 = CPUFCOp::create(temp_0, temp_2,
+                               conv_data.conv_kernel_ptr,
+                               conv_data.conv_bias_ptr);
 }
 
 void Executor::loadImage(std::string image_name, uint8_t* ai_buf,
