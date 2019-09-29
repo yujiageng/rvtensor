@@ -96,6 +96,17 @@ class Executor {
     RamTensor::sptr temp_1;
     RamTensor::sptr temp_2;
 
+    RamTensor::sptr stemp_0;
+    RamTensor::sptr stemp_1;
+    RamTensor::sptr stemp_2;
+
+    RamTensor::sptr sstemp_0;
+    RamTensor::sptr sstemp_1;
+    RamTensor::sptr sstemp_2;
+
+    RamTensor::sptr pool_temp;
+    RamTensor::sptr dense_temp;
+
     CPUFusionCBAOp::sptr cba1_1;
     CPUFusionCBAOp::sptr cba2_2;
     CPUFusionCBOp::sptr cb3_3;
@@ -145,8 +156,8 @@ class Executor {
     CPUActiveOp::sptr ac19_39;
 
     CPUAVPoolingOp::sptr avpool_40;
-    CPUFlattenOp::sptr flatten_41;
     CPUFCOp::sptr dense_42;
+    std::vector<Operation::sptr> ops_vec;
 };
 
 }  // namespace RVTensor
