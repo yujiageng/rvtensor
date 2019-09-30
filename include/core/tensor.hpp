@@ -64,6 +64,9 @@ class Tensor {
   ~Tensor();
   Tensor& operator=(const Tensor& m);
 
+  void reSize(int n, int h, int w, int c, size_t elemsize = 4u);
+  void reLoadData(void* data);
+
   /**
    *??tensor?????
    */
@@ -172,6 +175,12 @@ class RamTensor : public Tensor {
    * deep copy of this Tensor
    */
   RamTensor::sptr clone() const;
+
+  /**
+   * reconfig tensor
+   */
+  void reConfigTensor(int n, int h, int w, int c, void* data,
+                      size_t elemsize = 4u);
 
   /**
    *  write data to data_ptr

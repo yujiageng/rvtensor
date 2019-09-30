@@ -14,22 +14,23 @@ Executor::sptr Executor::create() {
 }
 
 Executor::sptr Executor::create(std::string model_name,
+                                int batch,
                                 int thread_num) {
-  return std::make_shared<Executor>(model_name, thread_num);
+  return std::make_shared<Executor>(model_name, batch, thread_num);
 }
 
 Executor::Executor() {}
 
-Executor::Executor(std::string model_name, int thread_num)
+Executor::Executor(std::string model_name, int batch, int thread_num)
                   : thread_num_(thread_num), model_name(model_name),
-                  image_ptr(nullptr), output_ptr(nullptr) {
+                  image_ptr(nullptr), operation_ptr(nullptr),
+                  n_batch(batch) {
     resnet_model_data_ptr = ResnetModelData::create();
     resnet_model_data_ptr->openModelFile(model_name.c_str());
 }
 
 void Executor::parseModel() {
 
-    int n_batch = 500;
     ConvModelData conv_data;
     BnModelData bn_data;
 
@@ -53,7 +54,7 @@ void Executor::parseModel() {
     conv_data = resnet_model_data_ptr->getConvModelData(1);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(1);
     cba1_1 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
-                                    image_ptr, temp_0,
+                                    operation_ptr, temp_0,
                                     conv_data.conv_kernel_ptr,
                                     conv_data.conv_bias_ptr);
     ops_vec.push_back(cba1_1);
@@ -288,16 +289,23 @@ void Executor::parseModel() {
     ops_vec.push_back(dense_42);
 }
 
-void Executor::loadImage(std::string image_name, uint8_t* ai_buf,
+void Executor::loadImage(std::string image_name,
                          int batch, int height, int width, int channel) {
-  image_ptr = RamTensor::create(batch, height, width, channel,
-                                reinterpret_cast<void*>(ai_buf), 1u);
+  image_ptr = RamTensor::create(batch, height, width, channel, 1u);
+  operation_ptr = RamTensor::create(batch, height, width, channel,
+                                    image_ptr->data_ptr, 1u);
   // TODO: load image content
 
 }
 
-int Executor::compute() {
+int Executor::compute(int batch_round) {
 
+    int shift = batch_round * n_batch * image_ptr->height * image_ptr->width *
+                image_ptr->cstep;
+    operation_ptr->reConfigTensor(n_batch, image_ptr->height,
+                                  image_ptr->width, image_ptr->channel,
+                                  (uint8_t*)(image_ptr->data_ptr) + shift,
+                                  image_ptr->element_size);
     for(size_t i = 0; i < ops_vec.size(); i++)
         ops_vec[i]->forward_compute();
     return 0;

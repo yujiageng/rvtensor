@@ -34,13 +34,13 @@ class Executor {
  public:
     using sptr = std::shared_ptr<Executor>;
     static sptr create();
-    static sptr create(std::string model_name, int thread_num = 1);
+    static sptr create(std::string model_name, int batch, int thread_num = 1);
 
     /**
      * Constructor
      */
     Executor();
-    Executor(std::string model_name, int thread_num = 1);
+    Executor(std::string model_name, int batch, int thread_num = 1);
 
     // for resnet20
     void parseModel();
@@ -52,13 +52,13 @@ class Executor {
      * @param height: height of input image
      * @param width:  width of imput image
      */
-    void loadImage(std::string image_name, uint8_t* ai_buf,
+    void loadImage(std::string image_name,
                    int batch, int height, int width, int channel);
 
     /**
      * Start to inference
      */
-    int compute();
+    int compute(int batch_round);
 
     /**
      * Copy Output data to application
@@ -84,9 +84,11 @@ class Executor {
  private:
     /// thread num
     int thread_num_;
+    /// batch
+    int n_batch;
     /// image struct
     RamTensor::sptr image_ptr;
-    RamTensor::sptr output_ptr;
+    RamTensor::sptr operation_ptr;
     /// model_name
     std::string model_name;
     /// resnet model data

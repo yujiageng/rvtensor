@@ -54,6 +54,22 @@ inline Tensor::~Tensor() {
   cstep = 0;
 }
 
+inline void Tensor::reSize(int n, int h, int w, int c, size_t elemsize) {
+    n_batch = n;
+    height = h;
+    width = w;
+    channel = n;
+    element_size = elemsize;
+
+    cstep = (channel <= 1) ? channel :
+         alignSize(channel * element_size, MALLOC_ALIGN) / element_size;
+}
+
+inline void Tensor::reLoadData(void* data) {
+    if (data)
+        data_ptr = data;
+}
+
 inline bool Tensor::empty() const {
   return data_ptr == nullptr || totalSize() == 0;
 }
@@ -207,6 +223,14 @@ inline RamTensor::sptr RamTensor::clone() const {
   }
 
   return ts;
+}
+
+void RamTensor::reConfigTensor(int n, int h, int w, int c, void* data,
+                                                    size_t elemsize) {
+
+    assert(is_malloced == false);
+    reSize(n, h, w, c, elemsize);
+    reLoadData(data);
 }
 
 void* RamTensor::tensorDataMalloc(size_t size) {
