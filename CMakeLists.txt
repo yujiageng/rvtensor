@@ -20,11 +20,13 @@ endif()
 
 project(RVTensor)
 
-option(RVTENSOR_QEMU     "qemu-riscv support" ON)
+option(RISCV "riscv support" OFF)
+option(X86   "x86 support" OFF)
+
+set(CMAKE_CXX_FLAGS "-O3 -std=gnu++11 ${CMAKE_CXX_FLAGS}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(src lib)
-#add_subdirectory(third_party)
 add_subdirectory(examples)

@@ -10,8 +10,14 @@ FILE(GLOB_RECURSE QEMU_RESNET20_SRCS
     )
 message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 include_directories(${CMAKE_CURRENT_LIST_DIR})
-include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
-link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/lib)
+
+if(RISCV)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
+    link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/lib)
+elseif(X86)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-x86/include)
+    link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-x86/lib)
+endif()
 
 add_executable(${QEMU_RESNET20_NAME} ${QEMU_RESNET20_SRCS})
 target_link_libraries(${QEMU_RESNET20_NAME} RVTensor

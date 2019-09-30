@@ -8,7 +8,11 @@ FILE(GLOB_RECURSE RVTENSOR_SRCS
     "${CMAKE_CURRENT_LIST_DIR}/*/*.S"
     )
 
-include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
-#link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/lib)
+if(RISCV)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
+elseif(X86)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
+endif()
+
 
 add_library(RVTensor STATIC ${RVTENSOR_SRCS})

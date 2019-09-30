@@ -53,7 +53,7 @@ class Executor {
      * @param width:  width of imput image
      */
     void loadImage(std::string image_name, uint8_t* ai_buf,
-                   int channel, int height, int width);
+                   int batch, int height, int width, int channel);
 
     /**
      * Start to inference
