@@ -16,17 +16,21 @@ ResnetModelData::sptr ResnetModelData::create() {
 
 inline ResnetModelData::ResnetModelData() {
     bn_model_datas.reserve(19);
-    conv_model_datas.reserve(19);
+    conv_model_datas.reserve(21);
 
-    for (size_t i = 0; i < 6; i++) {
+    for (size_t i = 0; i < 7; i++) {
         bn_model_datas[i].bn_beta_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
         bn_model_datas[i].bn_gamma_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
         bn_model_datas[i].bn_mean_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
         bn_model_datas[i].bn_variance_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
-        conv_model_datas[i].conv_kernel_ptr = FlashTensor::create(3, 3, 3, 16, 4u);
-        conv_model_datas[i].conv_bias_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
+        if (i == 0) {
+            conv_model_datas[i].conv_kernel_ptr = FlashTensor::create(3, 3, 3, 16, 4u);
+        } else {
+            conv_model_datas[i].conv_kernel_ptr = FlashTensor::create(3, 3, 16, 16, 4u);
+        }
+            conv_model_datas[i].conv_bias_ptr = FlashTensor::create(1, 1, 1, 16, 4u);
     }
-    for (size_t i = 7; i < 12; i++) {
+    for (size_t i = 7; i < 13; i++) {
         bn_model_datas[i].bn_beta_ptr = FlashTensor::create(1, 1, 1, 32, 4u);
         bn_model_datas[i].bn_gamma_ptr = FlashTensor::create(1, 1, 1, 32, 4u);
         bn_model_datas[i].bn_mean_ptr = FlashTensor::create(1, 1, 1, 32, 4u);
@@ -38,10 +42,10 @@ inline ResnetModelData::ResnetModelData() {
         bn_model_datas[i].bn_mean_ptr = FlashTensor::create(1, 1, 1, 64, 4u);
         bn_model_datas[i].bn_variance_ptr = FlashTensor::create(1, 1, 1, 64, 4u);
     }
-    for (size_t i = 7; i < 13; i++) {
+    for (size_t i = 7; i < 14; i++) {
         conv_model_datas[i].conv_bias_ptr = FlashTensor::create(1, 1, 1, 32, 4u);
     }
-    for (size_t i = 14; i < 19; i++) {
+    for (size_t i = 14; i < 21; i++) {
         conv_model_datas[i].conv_bias_ptr = FlashTensor::create(1, 1, 1, 64, 4u);
     }
     conv_model_datas[7].conv_kernel_ptr = FlashTensor::create(3, 3, 16, 32, 4u);
@@ -56,6 +60,8 @@ inline ResnetModelData::ResnetModelData() {
     conv_model_datas[16].conv_kernel_ptr = FlashTensor::create(1, 1, 32, 64, 4u);
     conv_model_datas[17].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
     conv_model_datas[18].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
+    conv_model_datas[19].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
+    conv_model_datas[20].conv_kernel_ptr = FlashTensor::create(3, 3, 64, 64, 4u);
 
     dense_model_data.conv_kernel_ptr = FlashTensor::create(1, 1, 64, 10, 4u);
     dense_model_data.conv_bias_ptr = FlashTensor::create(1, 1, 1, 10, 4u);
@@ -115,21 +121,21 @@ BnModelData ResnetModelData::getBatchNormModelData(int index) {
            "model_weights/batch_normalization_%d/batch_normalization_%d/gamma:0",
            index, index);
    float* gamma = getWeightByID(buf, &count);
-   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+   (bn_model_datas[index - 1].bn_gamma_ptr)->bindModelData(
                                    (void*)gamma, count * sizeof(float));
 
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/moving_mean:0",
            index, index);
    float* mean = getWeightByID(buf, &count);
-   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+   (bn_model_datas[index - 1].bn_mean_ptr)->bindModelData(
                                    (void*)mean, count * sizeof(float));
 
    sprintf(buf,
            "model_weights/batch_normalization_%d/batch_normalization_%d/moving_variance:0",
            index, index);
    float* variance = getWeightByID(buf, &count);
-   (bn_model_datas[index - 1].bn_beta_ptr)->bindModelData(
+   (bn_model_datas[index - 1].bn_variance_ptr)->bindModelData(
                                    (void*)variance, count * sizeof(float));
 
    return bn_model_datas[index - 1];

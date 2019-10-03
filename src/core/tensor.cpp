@@ -90,7 +90,9 @@ FlashTensor::sptr FlashTensor::create(int n, int h, int w, int c, void* data,
 inline FlashTensor::FlashTensor() : Tensor() {}
 
 inline FlashTensor::FlashTensor(int n, int h, int w, int c, size_t elemsize)
-  : Tensor(n, h, w, c, elemsize) {}
+    : Tensor(n, h, w, c, elemsize) {
+    data_ptr = nullptr;
+}
 
 inline FlashTensor::FlashTensor(int n, int h, int w, int c,
                                 void* data, size_t elemsize)
@@ -101,10 +103,12 @@ inline FlashTensor::~FlashTensor() {
 }
 
 void FlashTensor::bindModelData(void* data, size_t size) {
-  if (size == trueSize() && data_ptr == nullptr)
+  if (size == trueSize() && data_ptr == nullptr) {
     data_ptr = data;
-  else
+  } else {
+    printf("size:%d trueSize:%d n_batch:%d height:%d width:%d channel:%d element_size:%d\n", size, trueSize(), n_batch, height, width, channel, element_size);
     throw std::runtime_error("FlashTensor duplicate copy of data_ptr!");
+  }
 }
 
 template <typename T>

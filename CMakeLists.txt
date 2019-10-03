@@ -15,7 +15,7 @@ set(THIRD_PARTY_LIB_DIR "${BUILD_DIR}/third_party")
 set(THIRD_PARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party")
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 project(RVTensor)
