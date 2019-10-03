@@ -318,7 +318,7 @@ void Executor::loadImage(std::string image_name,
 int Executor::compute(int batch_round) {
 
     int shift = batch_round * n_batch * image_ptr->height * image_ptr->width *
-                image_ptr->cstep;
+                image_ptr->channel;
     operation_ptr->reConfigTensor(n_batch, image_ptr->height,
                                   image_ptr->width, image_ptr->channel,
                                   (uint8_t*)(image_ptr->data_ptr) + shift,

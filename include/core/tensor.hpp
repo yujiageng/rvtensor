@@ -80,10 +80,6 @@ class Tensor {
    * True size of the elements in Tensor
    */
   size_t trueSize() const;
-  /**
-   * Total size of elements in Tensor
-   */
-  size_t totalSize() const;
 
   /**
    * pointer to the data
@@ -106,12 +102,6 @@ class Tensor {
   int width;
   int height;
   int channel;
-
-  /**
-   * layout of the channel
-   * ????
-   */
-  size_t cstep;
 };
 
 class FlashTensor : public Tensor {

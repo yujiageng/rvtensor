@@ -81,91 +81,89 @@ inline void CPUConvOp::forward_compute() {
   int ci = input_tensor->channel;
   int hi = input_tensor->height;
   int wi = input_tensor->width;
-  int stepi = input_tensor->cstep;
   int co = output_tensor->channel;
   int ho = output_tensor->height;
   int wo = output_tensor->width;
-  int stepo = output_tensor->cstep;
   int sh = param_.sh;
   int sw = param_.sw;
-  int kh = weight_->height; 
+  int kh = weight_->height;
   int kw = weight_->width;
   int dh = param_.dh;
   int dw = param_.dw;
   int ph = param_.ph;
   int pw = param_.pw;
 
-  float* temp_weight = nullptr;
-  int x = 0, y = 0;
-  if (dh > 1 || dw > 1) {
-    kh = (kh - 1) * dh + 1;
-    kw = (kw - 1) * dw + 1;
-    temp_weight =
-        reinterpret_cast<float*>(malloc(sizeof(float) * kw * kh * ci * co));
-    x = -1;
-    y = -1;
-    // padding
-    for (int coi = 0; coi < co; coi++) { // 输出channel
-      for (int cii = 0; cii < ci; cii++) { // 输入channel
-        for (int khi = 0; khi < kh; khi++) {
-          for (int kwi = 0; kwi < kw; kwi++) {
-            x++;
-            if (khi % dh != 0 || kwi % dw != 0) {
-              temp_weight[x] = 0;
-            } else {
-              y++;
-              temp_weight[x] = weight[y];
-            }
-          }
-        }
-      }
-    }
-  } else {
-    temp_weight = weight;
-  }
-  // 卷积
-  for (int n = 0; n < ni; n++) {
-    for (int hoo = 0; hoo < ho; hoo++) {
-      for (int woo = 0; woo < wo; woo++) {
-        for (int coo = 0; coo < co; coo++) {
-          // 卷积开始和结束的index
-          int start_w = sw * woo - pw / 2;
-          int start_h = sh * hoo - ph / 2;
-          int end_w = (std::min)(start_w + kw, wi);
-          int end_h = (std::min)(start_h + kh, hi);
-          // kernel滑动的 index
-          int kernel_shift_w = (start_w < 0) ? -start_w : 0;
-          int kernel_shift_h = (start_h < 0) ? -start_h : 0;
-          //
-          int rem_dw = kernel_shift_w % dw;
-          int rem_dh = kernel_shift_h % dh;
-          int kernel_shift_dw = (rem_dw > 0) ? dw - rem_dw : 0;
-          int kernel_shift_dh = (rem_dh > 0) ? dh - rem_dh : 0;
-          start_w = (std::max)(start_w, kernel_shift_dw);
-          start_h = (std::max)(start_h, kernel_shift_dh);
-          output[n * co * stepo + coo * stepo + hoo * wo + woo] = 0;
-          for (int cii = 0; cii < ci; cii++) {
-            for (int h = start_h; h < end_h; h += dh) {
-              for (int w = start_w; w < end_w; w += dw) {
-                output[n * co * stepo + coo * stepo + hoo * wo + woo] +=
-                    input[n * ci * stepi + cii * stepi + h * wi + w] *
-                    temp_weight
-                        [coo * ci * kh * kw + cii * kh * kw +
-                         (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
-                         (kernel_shift_w + kernel_shift_dw + w - start_w)];
-              }
-            }
-          }
-          if (bias != nullptr) {
-            output[n * co * stepo + coo * stepo + hoo * wo + woo] += bias[coo];
-          }
-        }
-      }
-    }
-  }
-  if (dh > 1 || dw > 1) {
-    free(temp_weight);
-  }
+  // float* temp_weight = nullptr;
+  // int x = 0, y = 0;
+  // if (dh > 1 || dw > 1) {
+  //   kh = (kh - 1) * dh + 1;
+  //   kw = (kw - 1) * dw + 1;
+  //   temp_weight =
+  //       reinterpret_cast<float*>(malloc(sizeof(float) * kw * kh * ci * co));
+  //   x = -1;
+  //   y = -1;
+  //   // padding
+  //   for (int coi = 0; coi < co; coi++) { // 输出channel
+  //     for (int cii = 0; cii < ci; cii++) { // 输入channel
+  //       for (int khi = 0; khi < kh; khi++) {
+  //         for (int kwi = 0; kwi < kw; kwi++) {
+  //           x++;
+  //           if (khi % dh != 0 || kwi % dw != 0) {
+  //             temp_weight[x] = 0;
+  //           } else {
+  //             y++;
+  //             temp_weight[x] = weight[y];
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // } else {
+  //   temp_weight = weight;
+  // }
+  // // 卷积
+  // for (int n = 0; n < ni; n++) {
+  //   for (int hoo = 0; hoo < ho; hoo++) {
+  //     for (int woo = 0; woo < wo; woo++) {
+  //       for (int coo = 0; coo < co; coo++) {
+  //         // 卷积开始和结束的index
+  //         int start_w = sw * woo - pw / 2;
+  //         int start_h = sh * hoo - ph / 2;
+  //         int end_w = (std::min)(start_w + kw, wi);
+  //         int end_h = (std::min)(start_h + kh, hi);
+  //         // kernel滑动的 index
+  //         int kernel_shift_w = (start_w < 0) ? -start_w : 0;
+  //         int kernel_shift_h = (start_h < 0) ? -start_h : 0;
+  //         //
+  //         int rem_dw = kernel_shift_w % dw;
+  //         int rem_dh = kernel_shift_h % dh;
+  //         int kernel_shift_dw = (rem_dw > 0) ? dw - rem_dw : 0;
+  //         int kernel_shift_dh = (rem_dh > 0) ? dh - rem_dh : 0;
+  //         start_w = (std::max)(start_w, kernel_shift_dw);
+  //         start_h = (std::max)(start_h, kernel_shift_dh);
+  //         output[n * co * stepo + coo * stepo + hoo * wo + woo] = 0;
+  //         for (int cii = 0; cii < ci; cii++) {
+  //           for (int h = start_h; h < end_h; h += dh) {
+  //             for (int w = start_w; w < end_w; w += dw) {
+  //               output[n * co * stepo + coo * stepo + hoo * wo + woo] +=
+  //                   input[n * ci * stepi + cii * stepi + h * wi + w] *
+  //                   temp_weight
+  //                       [coo * ci * kh * kw + cii * kh * kw +
+  //                        (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
+  //                        (kernel_shift_w + kernel_shift_dw + w - start_w)];
+  //             }
+  //           }
+  //         }
+  //         if (bias != nullptr) {
+  //           output[n * co * stepo + coo * stepo + hoo * wo + woo] += bias[coo];
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // if (dh > 1 || dw > 1) {
+  //   free(temp_weight);
+  // }
 }
 
 }  // namespace RVTensor

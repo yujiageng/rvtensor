@@ -11,7 +11,7 @@
 
 int main(void)
 {
-    std::string model_name("resnet20");
+    std::string model_name("resnet20.h5");
     std::string input_name("test_batch.bin");
     int n_batch = 500;
 

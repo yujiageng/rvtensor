@@ -29,21 +29,15 @@ Tensor::sptr Tensor::create(int n, int h, int w, int c,
 }
 
 inline Tensor::Tensor() : data_ptr(nullptr), element_size(0), n_batch(0),
-                          width(0), height(0), channel(0), cstep(0) {}
+                          width(0), height(0), channel(0) {}
 
 inline Tensor::Tensor(int n, int h, int w, int c, size_t elemsize)
   : data_ptr(nullptr), element_size(elemsize), n_batch(n), width(w),
-                                                  height(h), channel(c) {
-    cstep = (channel <= 1) ? channel :
-         alignSize(channel * element_size, MALLOC_ALIGN) / element_size;
-}
+                                                  height(h), channel(c) {}
 
 inline Tensor::Tensor(int n, int h, int w, int c, void* data, size_t elemsize)
   : data_ptr(data), element_size(elemsize), n_batch(n), width(w),
-                                                  height(h), channel(c) {
-    cstep = (channel <= 1) ? channel :
-         alignSize(channel * element_size, MALLOC_ALIGN) / element_size;
-}
+                                                  height(h), channel(c) {}
 
 inline Tensor::~Tensor() {
   element_size = 0;
@@ -51,7 +45,6 @@ inline Tensor::~Tensor() {
   width = 0;
   height = 0;
   channel = 0;
-  cstep = 0;
 }
 
 inline void Tensor::reSize(int n, int h, int w, int c, size_t elemsize) {
@@ -60,9 +53,6 @@ inline void Tensor::reSize(int n, int h, int w, int c, size_t elemsize) {
     width = w;
     channel = n;
     element_size = elemsize;
-
-    cstep = (channel <= 1) ? channel :
-         alignSize(channel * element_size, MALLOC_ALIGN) / element_size;
 }
 
 inline void Tensor::reLoadData(void* data) {
@@ -71,11 +61,7 @@ inline void Tensor::reLoadData(void* data) {
 }
 
 inline bool Tensor::empty() const {
-  return data_ptr == nullptr || totalSize() == 0;
-}
-
-size_t Tensor::totalSize() const {
-  return cstep * height * width * n_batch * element_size;
+  return data_ptr == nullptr || trueSize() == 0;
 }
 
 size_t Tensor::count() const {
@@ -121,32 +107,12 @@ void FlashTensor::bindModelData(void* data, size_t size) {
     throw std::runtime_error("FlashTensor duplicate copy of data_ptr!");
 }
 
-// template <typename T>
-//   inline const T* FlashTensor::grepBatchData(int n) const {
-//     assert(sizeof(T) == element_size);
-//     return reinterpret_cast<const T*>(data_ptr) +
-//       n * channel * cstep * element_size;
-//   }
-//
-// template <typename T>
-//   inline const T* FlashTensor::grepChannelData(int n, int c) const {
-//     assert(sizeof(T) == element_size);
-//     return reinterpret_cast<const T*>(data_ptr) +
-//       (n * channel * cstep + c * cstep) * element_size;
-//   }
-//
-// template <typename T>
-//   inline const T* FlashTensor::grepRowData(int n, int c, int h) const {
-//     assert(sizeof(T) == element_size);
-//     return reinterpret_cast<const T*>(data_ptr) +
-//       (n * channel * cstep + c * cstep + h * width) * element_size;
-//   }
-//
 template <typename T>
   inline const T FlashTensor::grepElement(int n, int h, int w, int c) const {
     assert(sizeof(T) == element_size);
     return *(reinterpret_cast<const T*>(data_ptr) +
-        (n * height * width * cstep + h * width * cstep + w * cstep + c) * element_size);
+        (n * height * width * channel +
+         h * width * channel + w * channel + c) * element_size);
 }
 
 template <typename T>
@@ -173,11 +139,9 @@ inline RamTensor::RamTensor() : Tensor() {}
 
 inline RamTensor::RamTensor(int n, int h, int w, int c, size_t elemsize)
   : Tensor(n, h, w, c, elemsize), is_malloced(true) {
-    cstep = (c <= 1) ? channel :
-         alignSize(channel * element_size, MALLOC_ALIGN) / element_size;
 
-    if (totalSize() > 0) {
-      size_t total_size = alignSize(totalSize() * elemsize, 4);
+    if (trueSize() > 0) {
+      size_t total_size = alignSize(trueSize() * elemsize, 4);
       data_ptr = tensorDataMalloc(total_size);
     }
 }
@@ -196,7 +160,7 @@ void RamTensor::fill(T _v) {
   for (int i = 0; i < height * width; i++) {
     T* dst_ptr = reinterpret_cast<T*>(
                  reinterpret_cast<uint8_t*>(data_ptr) +
-                 i * cstep * element_size);
+                 i * channel * element_size);
     for (int c = 0; c < channel; c++) {
       dst_ptr[c] = _v;
     }
@@ -206,7 +170,7 @@ void RamTensor::fill(T _v) {
 void RamTensor::fill(uint8_t v) {
   for (int i = 0; i < height * width; i++) {
     uint8_t* dst_ptr = reinterpret_cast<uint8_t*>(data_ptr) +
-                       i * cstep * element_size;
+                       i * channel * element_size;
     memset(dst_ptr, v, channel);
   }
 }
@@ -218,8 +182,8 @@ inline RamTensor::sptr RamTensor::clone() const {
   RamTensor::sptr ts = std::make_shared<RamTensor>(
       n_batch, height, width, channel, element_size);
 
-  if (totalSize() > 0) {
-    memcpy(ts->data_ptr, data_ptr, totalSize());
+  if (trueSize() > 0) {
+    memcpy(ts->data_ptr, data_ptr, trueSize());
   }
 
   return ts;
@@ -261,14 +225,15 @@ template <typename T>
   inline T* RamTensor::grepBatchData(int n) {
     assert(sizeof(T) == element_size);
     return reinterpret_cast<T*>(data_ptr) +
-      n * height * width * cstep * element_size;
+      n * height * width * channel * element_size;
 }
 
 template <typename T>
   inline T RamTensor::grepElement(int n, int h, int w, int c) {
     assert(sizeof(T) == element_size);
     return *(reinterpret_cast<T*>(data_ptr) +
-        (n * height * width * cstep + h * width * cstep + w * cstep + c) * element_size);
+        (n * height * width * channel +
+         h * width * channel + w * channel + c) * element_size);
 }
 
 template <typename T>
