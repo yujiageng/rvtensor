@@ -292,10 +292,27 @@ void Executor::parseModel() {
 void Executor::loadImage(std::string image_name,
                          int batch, int height, int width, int channel) {
   image_ptr = RamTensor::create(batch, height, width, channel, 1u);
+  label_ptr = RamTensor::create(1, 1, 1, 10000, 1u);
   operation_ptr = RamTensor::create(batch, height, width, channel,
                                     image_ptr->data_ptr, 1u);
   // TODO: load image content
+  FILE* fpr = fopen(image_name.c_str(), "rb");
+  if (!fpr) {
+       printf("Open error!");
+       fclose(fpr);
+  }
 
+  for (int i = 0; i < 10000; i++) {
+    fread((uint8_t*)(label_ptr->data_ptr) + i, sizeof(uint8_t), 1, fpr);
+    fseek(fpr, 1, SEEK_CUR);
+    fread((uint8_t*)(image_ptr->data_ptr) +
+                     i * image_ptr->height * image_ptr->width * image_ptr->channel,
+                     sizeof(uint8_t), 3072, fpr);
+    fseek(fpr, 3072, SEEK_CUR);
+	printf("Batch %d : %c\n", i+1, (uint8_t*)(label_ptr->data_ptr) + i);
+  }
+
+  fclose(fpr);
 }
 
 int Executor::compute(int batch_round) {

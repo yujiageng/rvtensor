@@ -89,6 +89,7 @@ class Executor {
     /// image struct
     RamTensor::sptr image_ptr;
     RamTensor::sptr operation_ptr;
+    RamTensor::sptr label_ptr;
     /// model_name
     std::string model_name;
     /// resnet model data
