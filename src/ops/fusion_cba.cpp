@@ -90,14 +90,18 @@ inline void CPUFusionCBAOp::forward_compute() {
   // 卷积核的个数 = 输出的通道数
   int m = output_tensor->channel;
   /*卷积核 元素的个数,l.size=卷积核的尺寸，l.c= 卷积核的通道*/
-  int k = kh * kw * ci;
+  int k = kh * kh * ci;
   /*该层输出单通道的特征图的尺寸*/
   int n = ho * wo;
-
+  
+  int height_col = (hi + 2 * ph - kh) / sh + 1;
+  int width_col = (wi + 2 * pw - kh) / sw + 1;
   /*循环batch中的每个输入*/
+//  printf("------------------------");
   for (int i = 0; i < ni; ++i) {
+  //  printf("i:%d",i);
     /*用于存储经im2col转换后的输入特征矩阵*/
-    float* a = (float*)calloc(1024, sizeof(float));
+    float* a = (float*)calloc(((k+1)*height_col+1)*width_col, sizeof(float));
 
     /*a是指向当前层所有卷积核的*/
     float* b = weight;
@@ -105,10 +109,11 @@ inline void CPUFusionCBAOp::forward_compute() {
     float* c = output + i * n * m;
     float* im = input + i * ci * hi * wi;
     /*如果是1*1的卷积，那么不用对输入特征进行转化*/
-    if (kh * kw == 1) {
+    if (kh * kh == 1) {
       a = im;
     } else {
       /*对输入特征进行转化*/
+//      printf("ci:%d, hi:%d, wi:%d , kh:%d, sh:%d, ph:%d\n", ci, hi, wi, kh, sh, ph);
       im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
     }
     coppersmith_winograd(a, b, c, m, n, k, k, n, n);
@@ -291,6 +296,7 @@ inline void CPUFusionCBAOp::im2col_cpu(float* data_im, int channels,
   //计算卷积层输入单通道图像的数据容量
   int channels_col = channels * ksize * ksize;
   //循环每个卷积核的参数个数
+  // printf("col_index:%d\n", (channels_col * height_col + height_col) * width_col + width_col);
   for (c = 0; c < channels_col; ++c) {
     int w_offset = c % ksize;
     int h_offset = (c / ksize) % ksize;
@@ -301,6 +307,7 @@ inline void CPUFusionCBAOp::im2col_cpu(float* data_im, int channels,
         int im_row = h_offset + h * stride;
         int im_col = w_offset + w * stride;
         int col_index = (c * height_col + h) * width_col + w;
+//        printf("col_index:%d\n", col_index);
         data_col[col_index] = im2col_get_pixel(data_im, height, width, channels,
                                                im_row, im_col, c_im, pad);
       }

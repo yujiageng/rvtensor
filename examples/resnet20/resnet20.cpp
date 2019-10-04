@@ -22,6 +22,7 @@ int main(void)
 
     sp->loadImage(input_name, 10000, 32, 32, 3);
     for (int i = 0; i < 10000/n_batch; i++) {
+        printf("i:%d\n", i);
         sp->compute(i);
         sp->inferenceResult();
     }
