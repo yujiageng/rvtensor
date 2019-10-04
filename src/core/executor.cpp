@@ -27,6 +27,11 @@ Executor::Executor(std::string model_name, int batch, int thread_num)
                   n_batch(batch) {
     resnet_model_data_ptr = ResnetModelData::create();
     resnet_model_data_ptr->openModelFile(model_name.c_str());
+
+    image_ptr = RamTensor::create(10000, 32, 32, 3, 1u);
+    label_ptr = RamTensor::create(1, 1, 1, 10000, 1u);
+    operation_ptr = RamTensor::create(batch, 32, 32, 3,
+                                    image_ptr->data_ptr, 1u);
 }
 
 void Executor::parseModel() {
@@ -291,11 +296,7 @@ void Executor::parseModel() {
 
 void Executor::loadImage(std::string image_name,
                          int batch, int height, int width, int channel) {
-  image_ptr = RamTensor::create(batch, height, width, channel, 1u);
-  label_ptr = RamTensor::create(1, 1, 1, 10000, 1u);
-  operation_ptr = RamTensor::create(batch, height, width, channel,
-                                    image_ptr->data_ptr, 1u);
-  // TODO: load image content
+ // TODO: load image content
   FILE* fpr = fopen(image_name.c_str(), "rb");
   if (!fpr) {
        printf("Open error!");
@@ -329,8 +330,10 @@ int Executor::compute(int batch_round) {
                                   image_ptr->width, image_ptr->channel,
                                   (uint8_t*)(image_ptr->data_ptr) + shift,
                                   image_ptr->element_size);
-    for(size_t i = 0; i < ops_vec.size(); i++)
+    for(size_t i = 0; i < ops_vec.size(); i++) {
+        printf("compute i:%d\n", i);
         ops_vec[i]->forward_compute();
+    }
     return 0;
 }
 

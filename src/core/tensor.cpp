@@ -51,7 +51,7 @@ inline void Tensor::reSize(int n, int h, int w, int c, size_t elemsize) {
     n_batch = n;
     height = h;
     width = w;
-    channel = n;
+    channel = c;
     element_size = elemsize;
 }
 
