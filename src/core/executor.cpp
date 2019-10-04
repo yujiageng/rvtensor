@@ -301,22 +301,12 @@ void Executor::loadImage(std::string image_name,
        printf("Open error!");
        fclose(fpr);
   }
-  fseek(fpr, 0, SEEK_SET);
 
-  int res_read = 0;
-  int res_seek = 0;
   for (int i = 0; i < 10000; i++) {
-    fseek(fpr, i * 3073, SEEK_SET);
-
-    res_read = fread((uint8_t*)(label_ptr->data_ptr) + i, 1, 1, fpr);
-    if (res_read != 1) {
+    if (1 != fread((uint8_t*)(label_ptr->data_ptr) + i, 1, 1, fpr)) {
         printf("error of fread 1\n");
         if (feof(fpr))
             printf("end of file!\n");
-        exit(0);
-    }
-    if (0 != fseek(fpr, i * 3073 + 1, SEEK_SET)) {
-        printf("error of fseek 1\n");
         exit(0);
     }
     if (3072 != fread((uint8_t*)(image_ptr->data_ptr) +
@@ -325,11 +315,7 @@ void Executor::loadImage(std::string image_name,
         printf("error of fread 3072\n");
         exit(0);
     }
-    // if (0 != fseek(fpr, 3072, SEEK_CUR)) {
-    //     printf("error of fseek 3072\n");
-    //     exit(0);
-    // }
-    printf("Batch:%d  label:%d\n", i+1, *((uint8_t*)(label_ptr->data_ptr) + i));
+    // printf("Batch:%d  label:%d\n", i+1, *((uint8_t*)(label_ptr->data_ptr) + i));
   }
 
   fclose(fpr);
