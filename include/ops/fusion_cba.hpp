@@ -41,19 +41,24 @@ class CPUFusionCBAOp : public Operation {
   /**
    * 卷积
    */
-  void coppersmith_winograd(float* matA, float* matB, float* matC, int M,
+  template <typename T>
+  void coppersmith_winograd(T* matA, float* matB, float* matC, int M,
                             int N, int K, int strideA, int strideB,
                             int strideC);
 
-  float im2col_get_pixel(float* im, int height, int width, int channels,
+  template <typename T>
+  float im2col_get_pixel(T* im, int height, int width, int channels,
                          int row, int col, int channel, int pad);
 
-  void im2col_cpu(float* data_im, int channels, int height, int width,
-                  int ksize, int stride, int pad, float* data_col);
+  template <typename T>
+  void im2col_cpu(T* data_im, int channels, int height, int width,
+                  int ksize, int stride, int pad, T* data_col);
 
-  void mm_generate(float* matA, float* matB, float* matC, const int M,
+  template <typename T>
+  void mm_generate(T* matA, float* matB, float* matC, const int M,
                    const int N, const int K, const int strideA,
                    const int strideB, const int strideC);
+
   // BN
   void normalize_cpu(float* x, float* mean, float* variance, int batch,
                      int filters, int spatial);

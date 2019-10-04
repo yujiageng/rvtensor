@@ -48,7 +48,6 @@ inline void CPUFusionCBAOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
   float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
   float* weight = reinterpret_cast<float*>(weight_->data_ptr);
   float* bias = bias_ ? reinterpret_cast<float*>(bias_->data_ptr) : nullptr;
@@ -93,31 +92,50 @@ inline void CPUFusionCBAOp::forward_compute() {
   int k = kh * kh * ci;
   /*该层输出单通道的特征图的尺寸*/
   int n = ho * wo;
-  
+
   int height_col = (hi + 2 * ph - kh) / sh + 1;
   int width_col = (wi + 2 * pw - kh) / sw + 1;
   /*循环batch中的每个输入*/
 //  printf("------------------------");
-  for (int i = 0; i < ni; ++i) {
-  //  printf("i:%d",i);
-    /*用于存储经im2col转换后的输入特征矩阵*/
-    float* a = (float*)calloc(((k+1)*height_col+1)*width_col, sizeof(float));
 
-    /*a是指向当前层所有卷积核的*/
-    float* b = weight;
-    /*输出特征图个数*/
-    float* c = output + i * n * m;
-    float* im = input + i * ci * hi * wi;
-    /*如果是1*1的卷积，那么不用对输入特征进行转化*/
-    if (kh * kh == 1) {
-      a = im;
-    } else {
-      /*对输入特征进行转化*/
-//      printf("ci:%d, hi:%d, wi:%d , kh:%d, sh:%d, ph:%d\n", ci, hi, wi, kh, sh, ph);
-      im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
-    }
-    coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+  if (input_tensor->element_size == 4u) {
+      float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
+      for (int i = 0; i < ni; ++i) {
+      //  printf("i:%d",i);
+        /*用于存储经im2col转换后的输入特征矩阵*/
+        float* a = (float*)calloc(((k+1)*height_col+1)*width_col, sizeof(float));
+
+        /*a是指向当前层所有卷积核的*/
+        float* b = weight;
+        /*输出特征图个数*/
+        float* c = output + i * n * m;
+        float* im = input + i * ci * hi * wi;
+        /*如果是1*1的卷积，那么不用对输入特征进行转化*/
+        if (kh * kh == 1) {
+          a = im;
+        } else {
+          /*对输入特征进行转化*/
+//          printf("ci:%d, hi:%d, wi:%d , kh:%d, sh:%d, ph:%d\n", ci, hi, wi, kh, sh, ph);
+          im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
+        }
+        coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+      }
+  } else if (input_tensor->element_size == 1u) {
+      uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
+      for (int i = 0; i < ni; ++i) {
+          uint8_t* a = (uint8_t*)calloc(((k+1)*height_col+1)*width_col, sizeof(uint8_t));
+          float* b = weight;
+          float* c = output + i * n * m;
+          uint8_t* im = input + i * ci * hi * wi;
+          if (kh * kh == 1) {
+            a = im;
+          } else {
+            im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
+          }
+          coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+      }
   }
+
   /*BN input
   conv_layer output = bn_layer input
   bn_layer output 放入 output_tensor，并将output_tensor
@@ -139,7 +157,8 @@ inline void CPUFusionCBAOp::forward_compute() {
   relu(temp_ac_input, temp_ac_tensor->count(), output);
 }
 
-inline void CPUFusionCBAOp::mm_generate(float* matA, float* matB,
+template <typename T>
+inline void CPUFusionCBAOp::mm_generate(T* matA, float* matB,
                                         float* matC, const int M, const int N,
                                         const int K, const int strideA,
                                         const int strideB, const int strideC) {
@@ -153,10 +172,13 @@ inline void CPUFusionCBAOp::mm_generate(float* matA, float* matB,
     }
   }
 }
-inline void CPUFusionCBAOp::coppersmith_winograd(float* matA, float* matB,
-                                                 float* matC, int M, int N,
-                                                 int K, int strideA,
-                                                 int strideB, int strideC) {
+
+
+template <typename T>
+inline void CPUFusionCBAOp::coppersmith_winograd(T* matA, float* matB,
+                                                float* matC, int M, int N,
+                                                int K, int strideA,
+                                                int strideB, int strideC) {
   // step 1:使用普通的矩阵
   if ((M <= 64) || (M % 2 != 0 || N % 2 != 0 || K % 2 != 0)) {
     return mm_generate(matA, matB, matC, M, N, K, strideA, strideB, strideC);
@@ -276,7 +298,8 @@ inline void CPUFusionCBAOp::coppersmith_winograd(float* matA, float* matB,
   }
 }
 
-inline float CPUFusionCBAOp::im2col_get_pixel(float* im, int height,
+template <typename T>
+inline float CPUFusionCBAOp::im2col_get_pixel(T* im, int height,
                                               int width, int channels, int row,
                                               int col, int channel, int pad) {
   row -= pad;
@@ -286,9 +309,10 @@ inline float CPUFusionCBAOp::im2col_get_pixel(float* im, int height,
   return im[col + width * (row + height * channel)];
 }
 
-inline void CPUFusionCBAOp::im2col_cpu(float* data_im, int channels,
+template <typename T>
+inline void CPUFusionCBAOp::im2col_cpu(T* data_im, int channels,
                                        int height, int width, int ksize,
-                                       int stride, int pad, float* data_col) {
+                                       int stride, int pad, T* data_col) {
   int c, h, w;
   // 计算卷基层输出图像的高 和宽
   int height_col = (height + 2 * pad - ksize) / stride + 1;
@@ -320,6 +344,7 @@ inline void CPUFusionCBAOp::copy_cpu(int N, float* X, int INCX, float* Y,
   int i;
   for (i = 0; i < N; ++i) Y[i * INCY] = X[i * INCX];
 }
+
 //归一化
 inline void CPUFusionCBAOp::normalize_cpu(float* x, float* mean,
                                           float* variance, int batch,
