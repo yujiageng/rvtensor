@@ -106,6 +106,7 @@ inline void CPUFusionCBOp::forward_compute() {
       im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
     }
     coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+    free(a);
   }
   // BN input
   auto temp_tensor = output_tensor;

@@ -119,6 +119,7 @@ inline void CPUFusionCBAOp::forward_compute() {
           im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
         }
         coppersmith_winograd(a, b, c, m, n, k, k, n, n);
+        free(a);
       }
   } else if (input_tensor->element_size == 1u) {
       uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
