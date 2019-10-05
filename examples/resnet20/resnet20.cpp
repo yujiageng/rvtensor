@@ -14,7 +14,7 @@ int main(void)
     std::string model_name("resnet20.h5");
     std::string input_name("test_batch.bin");
     int n_batch = 500;
-
+    int top_5 = 5;
     RVTensor::Executor::sptr sp =
             RVTensor::Executor::create(model_name, n_batch);
 
@@ -24,7 +24,7 @@ int main(void)
     for (int i = 0; i < 10000/n_batch; i++) {
         printf("i:%d\n", i);
         sp->compute(i);
-        sp->inferenceResult();
+        sp->inferenceResult(top_5);
     }
 
     return 0;
