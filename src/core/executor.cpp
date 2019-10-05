@@ -360,10 +360,10 @@ int Executor::inferenceResult(int top) {
     3、 如果true_label 在tpo_k中，则acc += 1
   */
    for (int i = 0; i < result_ptr->n_batch; i++) {
-     int* indexes = calloc(top, sizeof(int));
+     int* indexes = (int*)calloc(top, sizeof(int));
      // 获取每张图像的true_label
      int img_ture_clz = label_ptr->data_ptr;
-     top_k(result_pt->data_ptr, classes, top, indexes);
+     top_k((float*)result_ptr->data_ptr, classes, top, indexes);
      for (int j = 0; j < top; j++) {
        int index = indexes[j];
        if (img_ture_clz == index) {
