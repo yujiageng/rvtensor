@@ -3,5 +3,6 @@ build-*/
 *.*~
 ~*.*
 *.swp
+*.swo
 rvtensor-*/
 rvtensor-*.*

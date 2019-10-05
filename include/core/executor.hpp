@@ -71,9 +71,8 @@ class Executor {
      * @param result_buf: result of inference
      * @param size: result size
      */
-    //int inferenceResult(void* result_buf, uint64_t size);
     int inferenceResult(int top);
-    
+
     void top_k(float* pred, int classes, int k, int* index);
     /**
      * Deconstructor

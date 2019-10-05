@@ -6,6 +6,7 @@
  */
 
 #include "include/core/executor.hpp"
+#include<math.h>
 
 namespace RVTensor {
 
@@ -348,7 +349,6 @@ int Executor::compute(int batch_round) {
     return 0;
 }
 
-//int Executor::inferenceResult(void* result_buf, uint64_t size) {
 int Executor::inferenceResult(int top) {
     // TODO: image classfication to resnet
    int classes = 10;
@@ -361,8 +361,8 @@ int Executor::inferenceResult(int top) {
   */
    for (int i = 0; i < result_ptr->n_batch; i++) {
      int* indexes = (int*)calloc(top, sizeof(int));
+     int img_ture_clz = ceil(((float*)label_ptr->data_ptr)[i]);
      // 获取每张图像的true_label
-     int img_ture_clz = label_ptr->data_ptr;
      top_k((float*)result_ptr->data_ptr, classes, top, indexes);
      for (int j = 0; j < top; j++) {
        int index = indexes[j];
@@ -370,11 +370,10 @@ int Executor::inferenceResult(int top) {
          acc += 1;
        }
      }
-    free(indexes);
+     free(indexes);
    }
 
     return acc;
-    
 }
 
 /* pred 存放预测的结果
