@@ -155,7 +155,7 @@ void Executor::parseModel() {
     // conv10
     conv_param = {2, 2, 1, 1, 0, 0, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(10);
-    c10_16 = CPUConvOp::create(conv_param,
+    c10_16 = CPUAccelerationConvOp::create(conv_param,
                                   temp_0, stemp_1,
                                   conv_data.conv_kernel_ptr,
                                   conv_data.conv_bias_ptr);
@@ -232,7 +232,7 @@ void Executor::parseModel() {
     // conv17
     conv_param = {2, 2, 1, 1, 0, 0, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(17);
-    c17_29 = CPUConvOp::create(conv_param,
+    c17_29 = CPUAccelerationConvOp::create(conv_param,
                                   stemp_0, sstemp_1,
                                   conv_data.conv_kernel_ptr,
                                   conv_data.conv_bias_ptr);
@@ -359,11 +359,24 @@ int Executor::inferenceResult(int top) {
     2、 获取每张图像的预测结果， 并计算得到top_k
     3、 如果true_label 在tpo_k中，则acc += 1
   */
+
+   FILE* std_p = fopen("label.txt", "a+");
+   FILE* res_p = fopen("result.txt", "a+");
+   for (int i = 0; i < 10000; i++) {
+       fprintf(std_p, "%d:  %d\n", i+1, ((uint8_t*)label_ptr->data_ptr)[i]);
+       float* p = (float*)result_ptr->data_ptr + i * result_ptr->height * result_ptr->width * result_ptr->channel;
+       fprintf(res_p, "%d:  ", i+1);
+       for (int j = 0; j < classes; j++) {
+           fprintf(res_p, "[%d, %f] ", j, p[j]);
+       }
+       fprintf(res_p, "\n");
+   }
+
    for (int i = 0; i < result_ptr->n_batch; i++) {
      int* indexes = (int*)calloc(top, sizeof(int));
-     int img_ture_clz = ceil(((float*)label_ptr->data_ptr)[i]);
+     int img_ture_clz = ((uint8_t*)label_ptr->data_ptr)[i];
      // 获取每张图像的true_label
-     top_k((float*)result_ptr->data_ptr, classes, top, indexes);
+     top_k(((float*)result_ptr->data_ptr + i * result_ptr->height * result_ptr->width * result_ptr->channel), classes, top, indexes);
      for (int j = 0; j < top; j++) {
        int index = indexes[j];
        if (img_ture_clz == index) {

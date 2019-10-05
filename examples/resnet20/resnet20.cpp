@@ -26,7 +26,7 @@ int main(void)
     }
 
     int acc = sp->inferenceResult(top_5);
-    printf("top5 acc:%%d\n", acc/100);
+    printf("top5 acc:%d%%\n", acc/100);
 
     return 0;
 }

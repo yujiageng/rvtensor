@@ -74,7 +74,6 @@ class CPUAccelerationConvOp : public Operation {
   FlashTensor::sptr weight_;
   /// model data: bias
   FlashTensor::sptr bias_;
-  std::vector<float*> tofree_;
 };
 
 }  // namespace RVTensor

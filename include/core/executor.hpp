@@ -18,7 +18,6 @@
 #include "include/ops/add.hpp"
 #include "include/ops/avpooling.hpp"
 #include "include/ops/bn.hpp"
-#include "include/ops/conv.hpp"
 #include "include/ops/fc.hpp"
 #include "include/ops/flatten.hpp"
 #include "include/ops/fusion_cb.hpp"
@@ -130,7 +129,7 @@ class Executor {
 
     CPUFusionCBAOp::sptr cba8_14;
     CPUFusionCBOp::sptr cb9_15;
-    CPUConvOp::sptr c10_16;
+    CPUAccelerationConvOp::sptr c10_16;
     CPUAddOp::sptr add4_17;
     CPUActiveOp::sptr ac9_18;
 
@@ -146,7 +145,7 @@ class Executor {
 
     CPUFusionCBAOp::sptr cba15_27;
     CPUFusionCBOp::sptr cb16_28;
-    CPUConvOp::sptr c17_29;
+    CPUAccelerationConvOp::sptr c17_29;
     CPUAddOp::sptr add7_30;
     CPUActiveOp::sptr ac15_31;
 
