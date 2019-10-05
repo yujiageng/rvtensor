@@ -41,8 +41,8 @@ inline void CPUFCOp::forward_compute() {
 
   // TODO: complete it
   int m = input_tensor->n_batch;
-  int k = input_tensor->count();
-  int n = output_tensor->count();
+  int k = input_tensor->count() / m;
+  int n = output_tensor->count() / m;
 
   multl(m, n, k, input, k, weight, k, output, n);
 
@@ -50,6 +50,7 @@ inline void CPUFCOp::forward_compute() {
 
   softmax(output, n);
 }
+
 inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
                            int ldb, float *C, int ldc) {
   int i, j, k;
@@ -66,6 +67,7 @@ inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
     }
   }
 }
+
 inline void CPUFCOp::softmax(float *input, int n) {
   int i;
   float sum = 0;
