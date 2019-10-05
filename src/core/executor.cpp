@@ -23,15 +23,19 @@ Executor::Executor() {}
 
 Executor::Executor(std::string model_name, int batch, int thread_num)
                   : thread_num_(thread_num), model_name(model_name),
-                  image_ptr(nullptr), operation_ptr(nullptr),
+                  image_ptr(nullptr), operation_in_ptr(nullptr),
+                  operation_out_ptr(nullptr),
                   n_batch(batch) {
     resnet_model_data_ptr = ResnetModelData::create();
     resnet_model_data_ptr->openModelFile(model_name.c_str());
 
     image_ptr = RamTensor::create(10000, 32, 32, 3, 1u);
     label_ptr = RamTensor::create(1, 1, 1, 10000, 1u);
-    operation_ptr = RamTensor::create(batch, 32, 32, 3,
+    result_ptr = RamTensor::create(10000, 1, 1, 10, 4u);
+    operation_in_ptr = RamTensor::create(batch, 32, 32, 3,
                                     image_ptr->data_ptr, 1u);
+    operation_out_ptr = RamTensor::create(batch, 1, 1, 10,
+                                    result_ptr->data_ptr, 4u);
 }
 
 void Executor::parseModel() {
@@ -59,7 +63,7 @@ void Executor::parseModel() {
     conv_data = resnet_model_data_ptr->getConvModelData(1);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(1);
     cba1_1 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
-                                    operation_ptr, temp_0,
+                                    operation_in_ptr, temp_0,
                                     conv_data.conv_kernel_ptr,
                                     conv_data.conv_bias_ptr);
     ops_vec.push_back(cba1_1);
@@ -288,7 +292,7 @@ void Executor::parseModel() {
     ops_vec.push_back(avpool_40);
     // dense
     conv_data = resnet_model_data_ptr->getDenseModelData();
-    dense_42 = CPUFCOp::create(pool_temp, dense_temp,
+    dense_42 = CPUFCOp::create(pool_temp, operation_out_ptr,
                                conv_data.conv_kernel_ptr,
                                conv_data.conv_bias_ptr);
     ops_vec.push_back(dense_42);
@@ -324,14 +328,21 @@ void Executor::loadImage(std::string image_name,
 
 int Executor::compute(int batch_round) {
 
-    int shift = batch_round * n_batch * image_ptr->height * image_ptr->width *
-                image_ptr->channel;
-    operation_ptr->reConfigTensor(n_batch, image_ptr->height,
-                                  image_ptr->width, image_ptr->channel,
-                                  (uint8_t*)(image_ptr->data_ptr) + shift,
-                                  image_ptr->element_size);
+    int in_shift = batch_round * n_batch * image_ptr->height * image_ptr->width *
+                   image_ptr->channel;
+    int out_shift = batch_round * n_batch * result_ptr->height *
+                    result_ptr->width * result_ptr->channel;
+    operation_in_ptr->reConfigTensor(n_batch, image_ptr->height,
+                                     image_ptr->width, image_ptr->channel,
+                                     (uint8_t*)(image_ptr->data_ptr) + in_shift,
+                                     image_ptr->element_size);
+    operation_out_ptr->reConfigTensor(n_batch, result_ptr->height,
+                                      result_ptr->width, result_ptr->channel,
+                                      (float*)(result_ptr->data_ptr) + out_shift,
+                                      result_ptr->element_size);
+
     for(size_t i = 0; i < ops_vec.size(); i++) {
-        printf("compute i:%d\n", i);
+        // printf("compute i:%d\n", i);
         ops_vec[i]->forward_compute();
     }
     return 0;

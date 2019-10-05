@@ -106,7 +106,6 @@ void FlashTensor::bindModelData(void* data, size_t size) {
   if (size == trueSize() && data_ptr == nullptr) {
     data_ptr = data;
   } else {
-    printf("size:%d trueSize:%d n_batch:%d height:%d width:%d channel:%d element_size:%d\n", size, trueSize(), n_batch, height, width, channel, element_size);
     throw std::runtime_error("FlashTensor duplicate copy of data_ptr!");
   }
 }

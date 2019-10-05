@@ -88,8 +88,10 @@ class Executor {
     int n_batch;
     /// image struct
     RamTensor::sptr image_ptr;
-    RamTensor::sptr operation_ptr;
+    RamTensor::sptr operation_in_ptr;
     RamTensor::sptr label_ptr;
+    RamTensor::sptr result_ptr;
+    RamTensor::sptr operation_out_ptr;
     /// model_name
     std::string model_name;
     /// resnet model data
