@@ -7,6 +7,7 @@
 #include "include/ops/fc.hpp"
 #include "include/ops/active.hpp"
 #include "math.h"
+#include <float.h>
 
 namespace RVTensor {
 
@@ -45,10 +46,20 @@ inline void CPUFCOp::forward_compute() {
   int n = output_tensor->count() / m;
 
   multl(m, n, k, input, k, weight, k, output, n);
-
+  printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+  for (int i = 0; i < output_tensor->count(); i++)
+      printf("output[%d] = %f\n", i, output[i]);
+  printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
   add_bias(output, bias, m, n, 1);
-
-  softmax(output, n);
+  printf("------------------------------------------\n");
+  for (int i = 0; i < output_tensor->count(); i++)
+      printf("output[%d] = %f\n", i, output[i]);
+  printf("------------------------------------------\n");
+  softmax(output, m, n);
+  printf("******************************************\n");
+  for (int i = 0; i < output_tensor->count(); i++)
+      printf("output[%d] = %f\n", i, output[i]);
+  printf("******************************************\n");
 }
 
 inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
@@ -63,35 +74,36 @@ inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
         //输入项和权重项对应相乘相加
         sum += A[i * lda + k] * B[j * ldb + k];
       }
-      C[i * ldc + j] += sum;
+      C[i * ldc + j] = sum;
     }
   }
 }
 
-inline void CPUFCOp::softmax(float *input, int n) {
-  int i;
-  float sum = 0;
-  float largest = 0;
-  for (i = 0; i < n; ++i) {
-    if (input[i] > largest) largest = input[i];
-  }
-  for (i = 0; i < n; ++i) {
-    float e = exp(input[i] - largest);
-    sum += e;
-    input[i] = e;
-  }
-  for (i = 0; i < n; ++i) {
-    input[i] /= sum;
+inline void CPUFCOp::softmax(float *input, int batch, int n) {
+  for (int b = 0; b < batch; b++) {
+    float* in = input + b * n;
+    float largest = in[0];
+    float sum = 0;
+    for (int i = 0; i < n; i++) {
+      if (in[i] > largest) largest = in[i];
+    }
+    for (int i = 0; i < n; i++) {
+      float e = exp(in[i] - largest);
+      sum += e;
+      in[i] = e;
+    }
+    for (int i = 0; i < n; i++) {
+      in[i] /= sum;
+    }
   }
 }
+
 inline void CPUFCOp::add_bias(float *output, float *biases, int batch,
                               int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {
     for (i = 0; i < n; ++i) {
-      for (j = 0; j < size; ++j) {
-        output[(b * n + i) * size + j] += biases[i];
-      }
+        output[b * n + i] += biases[i];
     }
   }
 }

@@ -60,8 +60,9 @@ class CPUFusionCBAOp : public Operation {
                    const int strideB, const int strideC);
 
   // BN
-  void normalize_cpu(float* x, float* mean, float* variance, int batch,
-                     int filters, int spatial);
+  void normalize_cpu(float* x, float* mean, float* variance,
+                     float* gamma, float*beta,
+                     int batch, int filters, int spatial);
   void scale_bias(float* output, float* scales, int batch, int n, int size);
 
   void add_bias(float* output, float* biases, int batch, int n, int size);
@@ -69,7 +70,7 @@ class CPUFusionCBAOp : public Operation {
   void copy_cpu(int N, float* X, int INCX, float* Y, int INCY);
 
   // 激活
-  void relu(float* input, int size, float* output);
+  void relu(float* input, int size);
   /**
    * inference
    */

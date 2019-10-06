@@ -45,10 +45,10 @@ inline void CPUAVPoolingOp::forward_compute() {
   // 8 * 8 *64
   for (int b = 0; b < batch; b++) {
     for (k = 0; k < c; ++k) {
-      int out_index = k + b * batch;
+      int out_index = k + b * c;
       output[out_index] = 0;
       for (i = 0; i < h * w; ++i) {
-        int in_index = i + h * w * (k + b * batch);
+        int in_index = i + h * w * (k + b * c);
         output[out_index] += input[in_index];
       }
       output[out_index] /= h * w;

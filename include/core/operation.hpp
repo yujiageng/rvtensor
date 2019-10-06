@@ -11,6 +11,9 @@
 #include <vector>
 #include <memory>
 #include "include/core/tensor.hpp"
+#include <cassert>
+
+#define CONV
 
 namespace RVTensor {
 

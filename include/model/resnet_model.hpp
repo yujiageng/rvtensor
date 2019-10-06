@@ -38,6 +38,8 @@ class ResnetModelData
  private:
     hid_t file;
     float* getWeightByID(const char* weightID, int* count);
+    void transpose(float* input, int n, int c, int h, int w);
+    void transpose(float* input, int h, int w);
     std::vector<BnModelData> bn_model_datas;
     std::vector<ConvModelData> conv_model_datas;
     ConvModelData dense_model_data;

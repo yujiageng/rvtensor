@@ -72,7 +72,7 @@ inline void CPUConvOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
-  uint8_t* input = reinterpret_cast<uint8_t*>(input_tensor->data_ptr);
+  float* input = reinterpret_cast<float*>(input_tensor->data_ptr);
   float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
   float* weight = reinterpret_cast<float*>(weight_->data_ptr);
   float* bias = bias_ ? reinterpret_cast<float*>(bias_->data_ptr) : nullptr;
@@ -93,39 +93,41 @@ inline void CPUConvOp::forward_compute() {
   int ph = param_.ph;
   int pw = param_.pw;
 
-  float* temp_weight = nullptr;
-  int x = 0, y = 0;
-  if (dh > 1 || dw > 1) {
-    kh = (kh - 1) * dh + 1;
-    kw = (kw - 1) * dw + 1;
-    temp_weight =
-        reinterpret_cast<float*>(malloc(sizeof(float) * kw * kh * ci * co));
-    x = -1;
-    y = -1;
-    // padding
-    for (int coi = 0; coi < co; coi++) { // 输出channel
-      for (int cii = 0; cii < ci; cii++) { // 输入channel
-        for (int khi = 0; khi < kh; khi++) {
-          for (int kwi = 0; kwi < kw; kwi++) {
-            x++;
-            if (khi % dh != 0 || kwi % dw != 0) {
-              temp_weight[x] = 0;
-            } else {
-              y++;
-              temp_weight[x] = weight[y];
-            }
-          }
-        }
-      }
-    }
-  } else {
-    temp_weight = weight;
-  }
+  // float* temp_weight = nullptr;
+  // int x = 0, y = 0;
+  // if (dh > 1 || dw > 1) {
+  //   kh = (kh - 1) * dh + 1;
+  //   kw = (kw - 1) * dw + 1;
+  //   temp_weight =
+  //       reinterpret_cast<float*>(malloc(sizeof(float) * kw * kh * ci * co));
+  //   x = -1;
+  //   y = -1;
+  //   // padding
+  //   for (int coi = 0; coi < co; coi++) { // 输出channel
+  //     for (int cii = 0; cii < ci; cii++) { // 输入channel
+  //       for (int khi = 0; khi < kh; khi++) {
+  //         for (int kwi = 0; kwi < kw; kwi++) {
+  //           x++;
+  //           if (khi % dh != 0 || kwi % dw != 0) {
+  //             temp_weight[x] = 0;
+  //           } else {
+  //             y++;
+  //             temp_weight[x] = weight[y];
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // } else {
+  //   temp_weight = weight;
+  // }
+  assert((dh == 1) && (dw == 1));
+  float* temp_weight = weight;
   // 卷积
   for (int n = 0; n < ni; n++) {
-    for (int hoo = 0; hoo < ho; hoo++) {
-      for (int woo = 0; woo < wo; woo++) {
-        for (int coo = 0; coo < co; coo++) {
+    for (int coo = 0; coo < co; coo++) {
+      for (int hoo = 0; hoo < ho; hoo++) {
+        for (int woo = 0; woo < wo; woo++) {
           // 卷积开始和结束的index
           int start_w = sw * woo - pw / 2;
           int start_h = sh * hoo - ph / 2;
@@ -151,19 +153,23 @@ inline void CPUConvOp::forward_compute() {
                         [coo * ci * kh * kw + cii * kh * kw +
                          (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
                          (kernel_shift_w + kernel_shift_dw + w - start_w)];
+                    // temp_weight
+                    //     [(kernel_shift_h + kernel_shift_dh + h - start_h) * kw * ci * co +
+                    //      (kernel_shift_w + kernel_shift_dw + w - start_w) * ci * co +
+                    //      cii * co + coo];
               }
             }
           }
-          // if (bias != nullptr) {
-          //   output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] += bias[coo];
-          // }
+          if (bias != nullptr) {
+            output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] += bias[coo];
+          }
         }
       }
     }
   }
-  if (dh > 1 || dw > 1) {
-    free(temp_weight);
-  }
+  // if (dh > 1 || dw > 1) {
+  //   free(temp_weight);
+  // }
 }
 
 }  // namespace RVTensor

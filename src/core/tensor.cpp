@@ -19,23 +19,23 @@ Tensor::sptr Tensor::create() {
   return std::make_shared<Tensor>();
 }
 
-Tensor::sptr Tensor::create(int n, int h, int w, int c, size_t elemsize) {
-  return std::make_shared<Tensor>(n, h, w, c, elemsize);
+Tensor::sptr Tensor::create(int n, int c, int h, int w, size_t elemsize) {
+  return std::make_shared<Tensor>(n, c, h, w, elemsize);
 }
 
-Tensor::sptr Tensor::create(int n, int h, int w, int c,
+Tensor::sptr Tensor::create(int n, int c, int h, int w,
                             void* data, size_t elemsize) {
-  return std::make_shared<Tensor>(n, h, w, c, data, elemsize);
+  return std::make_shared<Tensor>(n, c, h, w, data, elemsize);
 }
 
 inline Tensor::Tensor() : data_ptr(nullptr), element_size(0), n_batch(0),
                           width(0), height(0), channel(0) {}
 
-inline Tensor::Tensor(int n, int h, int w, int c, size_t elemsize)
+inline Tensor::Tensor(int n, int c, int h, int w, size_t elemsize)
   : data_ptr(nullptr), element_size(elemsize), n_batch(n), width(w),
                                                   height(h), channel(c) {}
 
-inline Tensor::Tensor(int n, int h, int w, int c, void* data, size_t elemsize)
+inline Tensor::Tensor(int n, int c, int h, int w, void* data, size_t elemsize)
   : data_ptr(data), element_size(elemsize), n_batch(n), width(w),
                                                   height(h), channel(c) {}
 
@@ -47,7 +47,7 @@ inline Tensor::~Tensor() {
   channel = 0;
 }
 
-inline void Tensor::reSize(int n, int h, int w, int c, size_t elemsize) {
+inline void Tensor::reSize(int n, int c, int h, int w, size_t elemsize) {
     n_batch = n;
     height = h;
     width = w;
@@ -77,26 +77,26 @@ FlashTensor::sptr FlashTensor::create() {
   return std::make_shared<FlashTensor>();
 }
 
-FlashTensor::sptr FlashTensor::create(int n, int h, int w, int c,
+FlashTensor::sptr FlashTensor::create(int n, int c, int h, int w,
                                       size_t elemsize) {
-  return std::make_shared<FlashTensor>(n, h, w, c, elemsize);
+  return std::make_shared<FlashTensor>(n, c, h, w, elemsize);
 }
 
-FlashTensor::sptr FlashTensor::create(int n, int h, int w, int c, void* data,
+FlashTensor::sptr FlashTensor::create(int n, int c, int h, int w, void* data,
                                       size_t elemsize) {
-  return std::make_shared<FlashTensor>(n, h, w, c, data, elemsize);
+  return std::make_shared<FlashTensor>(n, c, h, w, data, elemsize);
 }
 
 inline FlashTensor::FlashTensor() : Tensor() {}
 
-inline FlashTensor::FlashTensor(int n, int h, int w, int c, size_t elemsize)
-    : Tensor(n, h, w, c, elemsize) {
+inline FlashTensor::FlashTensor(int n, int c, int h, int w, size_t elemsize)
+    : Tensor(n, c, h, w, elemsize) {
     data_ptr = nullptr;
 }
 
-inline FlashTensor::FlashTensor(int n, int h, int w, int c,
+inline FlashTensor::FlashTensor(int n, int c, int h, int w,
                                 void* data, size_t elemsize)
-  : Tensor(n, h, w, c, data, elemsize) {}
+  : Tensor(n, c, h, w, data, elemsize) {}
 
 inline FlashTensor::~FlashTensor() {
   data_ptr = nullptr;
@@ -111,11 +111,11 @@ void FlashTensor::bindModelData(void* data, size_t size) {
 }
 
 template <typename T>
-  inline const T FlashTensor::grepElement(int n, int h, int w, int c) const {
+  inline const T FlashTensor::grepElement(int n, int c, int h, int w) const {
     assert(sizeof(T) == element_size);
     return *(reinterpret_cast<const T*>(data_ptr) +
         (n * height * width * channel +
-         h * width * channel + w * channel + c) * element_size);
+         c * height * width + h * width + w) * element_size);
 }
 
 template <typename T>
@@ -129,19 +129,19 @@ RamTensor::sptr RamTensor::create() {
   return std::make_shared<RamTensor>();
 }
 
-RamTensor::sptr RamTensor::create(int n, int h, int w, int c, size_t elemsize) {
-  return std::make_shared<RamTensor>(n, h, w, c, elemsize);
+RamTensor::sptr RamTensor::create(int n, int c, int h, int w, size_t elemsize) {
+  return std::make_shared<RamTensor>(n, c, h, w, elemsize);
 }
 
-RamTensor::sptr RamTensor::create(int n, int h, int w, int c,
+RamTensor::sptr RamTensor::create(int n, int c, int h, int w,
     void* data, size_t elemsize) {
-  return std::make_shared<RamTensor>(n, h, w, c, data, elemsize);
+  return std::make_shared<RamTensor>(n, c, h, w, data, elemsize);
 }
 
 inline RamTensor::RamTensor() : Tensor() {}
 
-inline RamTensor::RamTensor(int n, int h, int w, int c, size_t elemsize)
-  : Tensor(n, h, w, c, elemsize), is_malloced(true) {
+inline RamTensor::RamTensor(int n, int c, int h, int w, size_t elemsize)
+  : Tensor(n, c, h, w, elemsize), is_malloced(true) {
 
     if (trueSize() > 0) {
       size_t total_size = alignSize(trueSize() * elemsize, 4);
@@ -149,9 +149,9 @@ inline RamTensor::RamTensor(int n, int h, int w, int c, size_t elemsize)
     }
 }
 
-inline RamTensor::RamTensor(int n, int h, int w, int c,
+inline RamTensor::RamTensor(int n, int c, int h, int w,
     void* data, size_t elemsize)
-  : Tensor(n, h, w, c, data, elemsize), is_malloced(false) {}
+  : Tensor(n, c, h, w, data, elemsize), is_malloced(false) {}
 
 inline RamTensor::~RamTensor() {
   if (is_malloced)
@@ -160,21 +160,21 @@ inline RamTensor::~RamTensor() {
 
 template <typename T>
 void RamTensor::fill(T _v) {
-  for (int i = 0; i < height * width; i++) {
+  for (int i = 0; i < channel; i++) {
     T* dst_ptr = reinterpret_cast<T*>(
                  reinterpret_cast<uint8_t*>(data_ptr) +
-                 i * channel * element_size);
-    for (int c = 0; c < channel; c++) {
-      dst_ptr[c] = _v;
+                 i * height * width * element_size);
+    for (int j = 0; j < height * width; j++) {
+      dst_ptr[j] = _v;
     }
   }
 }
 
 void RamTensor::fill(uint8_t v) {
-  for (int i = 0; i < height * width; i++) {
+  for (int i = 0; i < channel; i++) {
     uint8_t* dst_ptr = reinterpret_cast<uint8_t*>(data_ptr) +
-                       i * channel * element_size;
-    memset(dst_ptr, v, channel);
+                       i * height * width * element_size;
+    memset(dst_ptr, v, height * width);
   }
 }
 
@@ -183,7 +183,7 @@ inline RamTensor::sptr RamTensor::clone() const {
     return create();
 
   RamTensor::sptr ts = std::make_shared<RamTensor>(
-      n_batch, height, width, channel, element_size);
+      n_batch, channel, height, width, element_size);
 
   if (trueSize() > 0) {
     memcpy(ts->data_ptr, data_ptr, trueSize());
@@ -192,11 +192,11 @@ inline RamTensor::sptr RamTensor::clone() const {
   return ts;
 }
 
-void RamTensor::reConfigTensor(int n, int h, int w, int c, void* data,
+void RamTensor::reConfigTensor(int n, int c, int h, int w, void* data,
                                                     size_t elemsize) {
 
     assert(is_malloced == false);
-    reSize(n, h, w, c, elemsize);
+    reSize(n, c, h, w, elemsize);
     reLoadData(data);
 }
 
@@ -232,11 +232,11 @@ template <typename T>
 }
 
 template <typename T>
-  inline T RamTensor::grepElement(int n, int h, int w, int c) {
+  inline T RamTensor::grepElement(int n, int c, int h, int w) {
     assert(sizeof(T) == element_size);
     return *(reinterpret_cast<T*>(data_ptr) +
         (n * height * width * channel +
-         h * width * channel + w * channel + c) * element_size);
+         c * height * width + h * width + w) * element_size);
 }
 
 template <typename T>

@@ -129,7 +129,12 @@ class Executor {
 
     CPUFusionCBAOp::sptr cba8_14;
     CPUFusionCBOp::sptr cb9_15;
+#ifdef CONV
+    CPUConvOp::sptr c10_16;
+#else
     CPUAccelerationConvOp::sptr c10_16;
+#endif
+
     CPUAddOp::sptr add4_17;
     CPUActiveOp::sptr ac9_18;
 
@@ -145,7 +150,12 @@ class Executor {
 
     CPUFusionCBAOp::sptr cba15_27;
     CPUFusionCBOp::sptr cb16_28;
+#ifdef CONV
+    CPUConvOp::sptr c17_29;
+#else
     CPUAccelerationConvOp::sptr c17_29;
+#endif
+
     CPUAddOp::sptr add7_30;
     CPUActiveOp::sptr ac15_31;
 

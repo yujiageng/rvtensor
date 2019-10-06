@@ -54,8 +54,8 @@ class CPUFusionCBOp : public Operation {
                    const int N, const int K, const int strideA,
                    const int strideB, const int strideC);
   // BN
-  void normalize_cpu(float* x, float* mean, float* variance, int batch,
-                     int filters, int spatial);
+  void normalize_cpu(float* x, float* mean, float* variance, float* gamma,
+                     float* beta, int batch, int filters, int spatial);
   void scale_bias(float* output, float* scales, int batch, int n, int size);
 
   void add_bias(float* output, float* biases, int batch, int n, int size);

@@ -30,10 +30,10 @@ Executor::Executor(std::string model_name, int batch, int thread_num)
     resnet_model_data_ptr = ResnetModelData::create();
     resnet_model_data_ptr->openModelFile(model_name.c_str());
 
-    image_ptr = RamTensor::create(10000, 32, 32, 3, 1u);
+    image_ptr = RamTensor::create(10000, 3, 32, 32, 1u);
     label_ptr = RamTensor::create(1, 1, 1, 10000, 1u);
     result_ptr = RamTensor::create(10000, 1, 1, 10, 4u);
-    operation_in_ptr = RamTensor::create(batch, 32, 32, 3,
+    operation_in_ptr = RamTensor::create(batch, 3, 32, 32,
                                     image_ptr->data_ptr, 1u);
     operation_out_ptr = RamTensor::create(batch, 1, 1, 10,
                                     result_ptr->data_ptr, 4u);
@@ -44,20 +44,19 @@ void Executor::parseModel() {
     ConvModelData conv_data;
     BnModelData bn_data;
 
-    temp_0 = RamTensor::create(n_batch, 32, 32, 16, 4u);
-    temp_1 = RamTensor::create(n_batch, 32, 32, 16, 4u);
-    temp_2 = RamTensor::create(n_batch, 32, 32, 16, 4u);
+    temp_0 = RamTensor::create(n_batch, 16, 32, 32, 4u);
+    temp_1 = RamTensor::create(n_batch, 16, 32, 32, 4u);
+    temp_2 = RamTensor::create(n_batch, 16, 32, 32, 4u);
 
-    stemp_0 = RamTensor::create(n_batch, 16, 16, 32, temp_0->data_ptr, 4u);
-    stemp_1 = RamTensor::create(n_batch, 16, 16, 32, temp_1->data_ptr, 4u);
-    stemp_2 = RamTensor::create(n_batch, 16, 16, 32, temp_2->data_ptr, 4u);
+    stemp_0 = RamTensor::create(n_batch, 32, 16, 16, temp_0->data_ptr, 4u);
+    stemp_1 = RamTensor::create(n_batch, 32, 16, 16, temp_1->data_ptr, 4u);
+    stemp_2 = RamTensor::create(n_batch, 32, 16, 16, temp_2->data_ptr, 4u);
 
-    sstemp_0 = RamTensor::create(n_batch, 8, 8, 64, temp_0->data_ptr, 4u);
-    sstemp_1 = RamTensor::create(n_batch, 8, 8, 64, temp_1->data_ptr, 4u);
-    sstemp_2 = RamTensor::create(n_batch, 8, 8, 64, temp_2->data_ptr, 4u);
+    sstemp_0 = RamTensor::create(n_batch, 64, 8, 8, temp_0->data_ptr, 4u);
+    sstemp_1 = RamTensor::create(n_batch, 64, 8, 8, temp_1->data_ptr, 4u);
+    sstemp_2 = RamTensor::create(n_batch, 64, 8, 8, temp_2->data_ptr, 4u);
 
     pool_temp = RamTensor::create(n_batch, 1, 1, 64, temp_0->data_ptr, 4u);
-    dense_temp = RamTensor::create(n_batch, 1, 1, 10, temp_2->data_ptr, 4u);
 
     // conv1 + bn1 + at1
     ConvParam conv_param = {1, 1, 1, 1, 0, 0, 0};
@@ -155,10 +154,17 @@ void Executor::parseModel() {
     // conv10
     conv_param = {2, 2, 1, 1, 0, 0, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(10);
+#ifdef CONV
+    c10_16 = CPUConvOp::create(conv_param,
+                                  temp_0, stemp_1,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+#else
     c10_16 = CPUAccelerationConvOp::create(conv_param,
                                   temp_0, stemp_1,
                                   conv_data.conv_kernel_ptr,
                                   conv_data.conv_bias_ptr);
+#endif
     ops_vec.push_back(c10_16);
     // add4
     add4_17 = CPUAddOp::create(stemp_1, stemp_2, stemp_0);
@@ -232,10 +238,17 @@ void Executor::parseModel() {
     // conv17
     conv_param = {2, 2, 1, 1, 0, 0, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(17);
+#ifdef CONV
+    c17_29 = CPUConvOp::create(conv_param,
+                                  stemp_0, sstemp_1,
+                                  conv_data.conv_kernel_ptr,
+                                  conv_data.conv_bias_ptr);
+#else
     c17_29 = CPUAccelerationConvOp::create(conv_param,
                                   stemp_0, sstemp_1,
                                   conv_data.conv_kernel_ptr,
                                   conv_data.conv_bias_ptr);
+#endif
     ops_vec.push_back(c17_29);
     // add7
     add7_30 = CPUAddOp::create(sstemp_1, sstemp_2, sstemp_0);
@@ -333,19 +346,61 @@ int Executor::compute(int batch_round) {
                    image_ptr->channel;
     int out_shift = batch_round * n_batch * result_ptr->height *
                     result_ptr->width * result_ptr->channel;
-    operation_in_ptr->reConfigTensor(n_batch, image_ptr->height,
-                                     image_ptr->width, image_ptr->channel,
+    operation_in_ptr->reConfigTensor(n_batch, image_ptr->channel,
+                                     image_ptr->height,
+                                     image_ptr->width,
                                      (uint8_t*)(image_ptr->data_ptr) + in_shift,
                                      image_ptr->element_size);
-    operation_out_ptr->reConfigTensor(n_batch, result_ptr->height,
-                                      result_ptr->width, result_ptr->channel,
+    operation_out_ptr->reConfigTensor(n_batch, result_ptr->channel,
+                                      result_ptr->height,
+                                      result_ptr->width,
                                       (float*)(result_ptr->data_ptr) + out_shift,
                                       result_ptr->element_size);
 
     for(size_t i = 0; i < ops_vec.size(); i++) {
-        // printf("compute i:%d\n", i);
         ops_vec[i]->forward_compute();
+        // print every layer
+        // auto output_tensor = ops_vec[i]->getOutputs()[0];
+        // float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
+        // int bo = output_tensor->n_batch;
+        // int co = output_tensor->channel;
+        // int ho = output_tensor->height;
+        // int wo = output_tensor->width;
+        // char filename[20];
+        // sprintf(filename, "%d-layer%d.txt", batch_round, i);
+        // FILE* p = fopen(filename, "a+");
+        // for (int j = 0; j < bo * co * ho * wo; j++) {
+        //     fprintf(p, "%f\n", output[j]);
+        // }
+        // fclose(p);
     }
+
+    // print each batch
+    // uint8_t* input = reinterpret_cast<uint8_t*>(operation_in_ptr->data_ptr);
+    // float* output = reinterpret_cast<float*>(operation_out_ptr->data_ptr);
+    // int bo = operation_out_ptr->n_batch;
+    // int co = operation_out_ptr->channel;
+    // int ho = operation_out_ptr->height;
+    // int wo = operation_out_ptr->width;
+    // int bi = operation_in_ptr->n_batch;
+    // int ci = operation_in_ptr->channel;
+    // int hi = operation_in_ptr->height;
+    // int wi = operation_in_ptr->width;
+    // char in_filename[20];
+    // char out_filename[20];
+    // sprintf(in_filename, "%d-input.txt", batch_round);
+    // sprintf(out_filename, "%d-output.txt", batch_round);
+    // FILE* in_p = fopen(in_filename, "a+");
+    // FILE* out_p = fopen(out_filename, "a+");
+    // for (int i = 0; i < bo * co * ho * wo; i++) {
+    //     fprintf(out_p, "%f\n", output[i]);
+    // }
+    // for (int i = 0; i < bi * ci * hi * wi; i++) {
+    //     fprintf(in_p, "%d\n", input[i]);
+    // }
+    // fclose(in_p);
+    // fclose(out_p);
+
     return 0;
 }
 
@@ -371,6 +426,8 @@ int Executor::inferenceResult(int top) {
        }
        fprintf(res_p, "\n");
    }
+   fclose(std_p);
+   fclose(res_p);
 
    for (int i = 0; i < result_ptr->n_batch; i++) {
      int* indexes = (int*)calloc(top, sizeof(int));

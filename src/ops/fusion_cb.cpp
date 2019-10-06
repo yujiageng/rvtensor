@@ -48,15 +48,6 @@ inline void CPUFusionCBOp::forward_compute() {
   float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
   float* weight = reinterpret_cast<float*>(weight_->data_ptr);
   float* bias = bias_ ? reinterpret_cast<float*>(bias_->data_ptr) : nullptr;
-  // auto tmp_output = output_tensor;
-  // //[TODO] create a tmp_output
-  // auto conv =
-  //     CPUConvOp::create(conv_param_, input_tensor, tmp_output, weight_,
-  //     bias_);
-  // conv->forward_compute();
-  // //[TODO] use tmp_output as input
-  // auto bn = CPUBnOp::create(bn_param_, tmp_output, output_tensor);
-  // bn->forward_compute();
 
   int ni = input_tensor->n_batch;
   int ci = input_tensor->channel;
@@ -78,7 +69,94 @@ inline void CPUFusionCBOp::forward_compute() {
   // bn_param;
   float* mean = (float*)(bn_param_.bn_mean_ptr->data_ptr);
   float* variance = (float*)(bn_param_.bn_variance_ptr->data_ptr);
-  float* scales = (float*)calloc(co, sizeof(float));
+  float* gamma = (float*)(bn_param_.bn_gamma_ptr->data_ptr);
+  float* beta = (float*)(bn_param_.bn_beta_ptr->data_ptr);
+
+#ifdef CONV
+
+  // float* temp_weight = nullptr;
+  // int x = 0, y = 0;
+  // if (dh > 1 || dw > 1) {
+  //   kh = (kh - 1) * dh + 1;
+  //   kw = (kw - 1) * dw + 1;
+  //   temp_weight =
+  //       reinterpret_cast<float*>(malloc(sizeof(float) * kw * kh * ci * co));
+  //   x = -1;
+  //   y = -1;
+  //   // padding
+  //   for (int coi = 0; coi < co; coi++) { // 输出channel
+  //     for (int cii = 0; cii < ci; cii++) { // 输入channel
+  //       for (int khi = 0; khi < kh; khi++) {
+  //         for (int kwi = 0; kwi < kw; kwi++) {
+  //           x++;
+  //           if (khi % dh != 0 || kwi % dw != 0) {
+  //             temp_weight[x] = 0;
+  //           } else {
+  //             y++;
+  //             temp_weight[x] = weight[y];
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // } else {
+  //   temp_weight = weight;
+  // }
+
+  assert((dh == 1) && (dw == 1));
+  float* temp_weight = weight;
+  // 卷积
+  for (int n = 0; n < ni; n++) {
+    for (int coo = 0; coo < co; coo++) {
+      for (int hoo = 0; hoo < ho; hoo++) {
+        for (int woo = 0; woo < wo; woo++) {
+          // 卷积开始和结束的index
+          int start_w = sw * woo - pw / 2;
+          int start_h = sh * hoo - ph / 2;
+          int end_w = (std::min)(start_w + kw, wi);
+          int end_h = (std::min)(start_h + kh, hi);
+          // kernel滑动的 index
+          int kernel_shift_w = (start_w < 0) ? -start_w : 0;
+          int kernel_shift_h = (start_h < 0) ? -start_h : 0;
+          //
+          int rem_dw = kernel_shift_w % dw;
+          int rem_dh = kernel_shift_h % dh;
+          int kernel_shift_dw = (rem_dw > 0) ? dw - rem_dw : 0;
+          int kernel_shift_dh = (rem_dh > 0) ? dh - rem_dh : 0;
+          start_w = (std::max)(start_w, kernel_shift_dw);
+          start_h = (std::max)(start_h, kernel_shift_dh);
+          output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] = 0;
+
+          for (int cii = 0; cii < ci; cii++) {
+            for (int h = start_h; h < end_h; h += dh) {
+              for (int w = start_w; w < end_w; w += dw) {
+                output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] +=
+                    input[n * ci * hi * wi + cii * hi * wi + h * wi + w] *
+                    temp_weight
+                        [coo * ci * kh * kw + cii * kh * kw +
+                         (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
+                         (kernel_shift_w + kernel_shift_dw + w - start_w)];
+                    // temp_weight
+                    //     [(kernel_shift_h + kernel_shift_dh + h - start_h) * kw * ci * co +
+                    //      (kernel_shift_w + kernel_shift_dw + w - start_w) * ci * co +
+                    //      cii * co + coo];
+              }
+            }
+          }
+
+          if (bias != nullptr) {
+            output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] += bias[coo];
+          }
+        }
+      }
+    }
+  }
+  // if (dh > 1 || dw > 1) {
+  //   free(temp_weight);
+  // }
+
+#else
+
   // 卷积核的个数 = 输出的通道数
   int m = output_tensor->channel;
   /*卷积核 元素的个数,l.size=卷积核的尺寸，l.c= 卷积核的通道*/
@@ -108,17 +186,13 @@ inline void CPUFusionCBOp::forward_compute() {
     coppersmith_winograd(a, b, c, m, n, k, k, n, n);
     free(a);
   }
-  // BN input
-  auto temp_tensor = output_tensor;
-  float* temp_input = reinterpret_cast<float*>(output_tensor->data_ptr);
-  // BN
-  copy_cpu(input_tensor->count(), temp_input, 1, output, 1);
+
+#endif
+
   // 归一化
-  normalize_cpu(output, &mean[0], &variance[0], ni, co, ho * wo);
-  // scales大小为out_c的数组，值全是1
-  scale_bias(output, scales, ni, co, ho * wo);
-  add_bias(output, bias, ni, co, ho * wo);
+  normalize_cpu(output, mean, variance, gamma, beta, ni, co, ho * wo);
 }
+
 inline void CPUFusionCBOp::mm_generate(float* matA, float* matB,
                                        float* matC, const int M, const int N,
                                        const int K, const int strideA,
@@ -301,26 +375,29 @@ inline void CPUFusionCBOp::copy_cpu(int N, float* X, int INCX, float* Y,
 }
 //归一化
 inline void CPUFusionCBOp::normalize_cpu(float* x, float* mean,
-                                         float* variance, int batch,
-                                         int filters, int spatial) {
+                                          float* variance, float*gamma,
+                                          float* beta, int batch,
+                                          int filters, int spatial) {
   int b, f, i;
   for (b = 0; b < batch; ++b) {
-    for (i = 0; i < spatial; ++i) {
-      for (f = 0; f < filters; ++f) {
+    for (f = 0; f < filters; ++f) {
+      int offset = beta[f] - gamma[f] * mean[f] / sqrt(variance[f] + 0.001f);
+      int slope = gamma[f] / sqrt(variance[f] + 0.001f);
+      for (i = 0; i < spatial; ++i) {
         int index = b * filters * spatial + f * spatial + i;
-        //公式中的ε=.000001f
-        x[index] = (x[index] - mean[f]) / (sqrt(variance[f]) + .000001f);
+        x[index] = slope * x[index] + offset;
       }
     }
   }
 }
+
 inline void CPUFusionCBOp::scale_bias(float* output, float* scales, int batch,
                                       int n, int size) {
   // scales 全是1
   int i, j, b;
   for (b = 0; b < batch; ++b) {
-    for (j = 0; j < size; ++j) {
-      for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
+      for (j = 0; j < size; ++j) {
         output[(b * n + i) * size + j] *= scales[i];
       }
     }
@@ -330,8 +407,8 @@ inline void CPUFusionCBOp::add_bias(float* output, float* biases, int batch,
                                     int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {
-    for (j = 0; j < size; ++j) {
-      for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
+      for (j = 0; j < size; ++j) {
         output[(b * n + i) * size + j] += biases[i];
       }
     }
