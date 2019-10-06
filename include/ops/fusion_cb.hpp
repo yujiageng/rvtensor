@@ -38,6 +38,12 @@ class CPUFusionCBOp : public Operation {
   CPUFusionCBOp& operator=(const CPUFusionCBOp& fusion_cb_op);
 
   /**
+     * check output dims
+     */
+    void checkOutputDims() override;
+
+
+  /**
    * 卷积
    */
   void coppersmith_winograd(float* matA, float* matB, float* matC, int M,

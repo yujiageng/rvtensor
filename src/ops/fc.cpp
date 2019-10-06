@@ -46,20 +46,20 @@ inline void CPUFCOp::forward_compute() {
   int n = output_tensor->count() / m;
 
   multl(m, n, k, input, k, weight, k, output, n);
-  printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-  for (int i = 0; i < output_tensor->count(); i++)
-      printf("output[%d] = %f\n", i, output[i]);
-  printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+  // printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+  // for (int i = 0; i < output_tensor->count(); i++)
+  //     printf("output[%d] = %f\n", i, output[i]);
+  // printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
   add_bias(output, bias, m, n, 1);
-  printf("------------------------------------------\n");
-  for (int i = 0; i < output_tensor->count(); i++)
-      printf("output[%d] = %f\n", i, output[i]);
-  printf("------------------------------------------\n");
+  // printf("------------------------------------------\n");
+  // for (int i = 0; i < output_tensor->count(); i++)
+  //     printf("output[%d] = %f\n", i, output[i]);
+  // printf("------------------------------------------\n");
   softmax(output, m, n);
-  printf("******************************************\n");
-  for (int i = 0; i < output_tensor->count(); i++)
-      printf("output[%d] = %f\n", i, output[i]);
-  printf("******************************************\n");
+  // printf("******************************************\n");
+  // for (int i = 0; i < output_tensor->count(); i++)
+  //     printf("output[%d] = %f\n", i, output[i]);
+  // printf("******************************************\n");
 }
 
 inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,

@@ -18,7 +18,7 @@ CPUFusionCBOp::sptr CPUFusionCBOp::create(
     RamTensor::sptr output, FlashTensor::sptr weight, FlashTensor::sptr bias) {
   CPUFusionCBOp::sptr ptr = std::make_shared<CPUFusionCBOp>(
       conv_param, bn_param, input, output, weight, bias);
-  // ptr->checkOutputDims();
+  ptr->checkOutputDims();
   return ptr;
 }
 
@@ -39,6 +39,37 @@ inline CPUFusionCBOp::CPUFusionCBOp(
       bias_(bias) {}
 
 inline CPUFusionCBOp::~CPUFusionCBOp() {}
+
+inline void CPUFusionCBOp::checkOutputDims() {
+  auto input = getInputs()[0];
+  auto output = getOutputs()[0];
+  if (input->channel != weight_->channel) {
+    throw std::runtime_error("CPUFusionCBOp channel of input is wrong!");
+  }
+
+  int input_h = input->height + conv_param_.ph;
+  int input_w = input->width + conv_param_.pw;
+  int kh =
+      conv_param_.dh > 1 ? (weight_->height - 1) * conv_param_.dh + 1 : weight_->height;
+  int kw =
+      conv_param_.dw > 1 ? (weight_->width - 1) * conv_param_.dw + 1 : weight_->width;
+  int output_h = (input_h - kh) / conv_param_.sh + 1;
+  int output_w = (input_w - kw) / conv_param_.sw + 1;
+  int output_c = weight_->n_batch;
+  int output_n = input->n_batch;
+  if (output->n_batch != output_n || output->channel != output_c ||
+      output->height != output_h || output->width != output_w) {
+    throw std::runtime_error("CPUFusionCBOp output shape is wrong!");
+  }
+
+  if (input_h < kh) {
+    throw std::runtime_error("CPUFusionCBOp kernel_h is wrong");
+  }
+
+  if (input_w < kw) {
+    throw std::runtime_error("CPUFusionCBOp kernel_w is wrong!");
+  }
+}
 
 inline void CPUFusionCBOp::forward_compute() {
   auto input_tensor = getInputs()[0];

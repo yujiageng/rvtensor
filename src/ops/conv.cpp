@@ -17,7 +17,7 @@ CPUConvOp::sptr CPUConvOp::create(ConvParam conv_param, RamTensor::sptr input,
                                   FlashTensor::sptr bias) {
   CPUConvOp::sptr ptr =
       std::make_shared<CPUConvOp>(conv_param, input, output, weight, bias);
-  // ptr->checkOutputDims();
+  ptr->checkOutputDims();
   return ptr;
 }
 

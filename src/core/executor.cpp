@@ -59,7 +59,7 @@ void Executor::parseModel() {
     pool_temp = RamTensor::create(n_batch, 1, 1, 64, temp_0->data_ptr, 4u);
 
     // conv1 + bn1 + at1
-    ConvParam conv_param = {1, 1, 1, 1, 0, 0, 0};
+    ConvParam conv_param = {1, 1, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(1);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(1);
     cba1_1 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
@@ -134,7 +134,7 @@ void Executor::parseModel() {
     ac7_13 = CPUActiveOp::create(ACTIVE_RELU, temp_1, temp_0);
     ops_vec.push_back(ac7_13);
     // conv8 + bn8 + at8
-    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_param = {2, 2, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(8);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(8);
     cba8_14 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
@@ -143,7 +143,7 @@ void Executor::parseModel() {
                                     conv_data.conv_bias_ptr);
     ops_vec.push_back(cba8_14);
     // conv9 + bn9
-    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_param = {1, 1, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(9);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(9);
     cb9_15 = CPUFusionCBOp::create(conv_param, bn_data,
@@ -173,7 +173,7 @@ void Executor::parseModel() {
     ac9_18 = CPUActiveOp::create(ACTIVE_RELU, stemp_0, stemp_1);
     ops_vec.push_back(ac9_18);
     // conv11 + bn10 + at10
-    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_param = {1, 1, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(11);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(10);
     cba11_19 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
@@ -218,7 +218,7 @@ void Executor::parseModel() {
     ac13_26 = CPUActiveOp::create(ACTIVE_RELU, stemp_1, stemp_0);
     ops_vec.push_back(ac13_26);
     // conv15 + bn14 + at14
-    conv_param = {2, 2, 1, 1, 0, 0, 0};
+    conv_param = {2, 2, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(15);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(14);
     cba15_27 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,
@@ -227,7 +227,7 @@ void Executor::parseModel() {
                                     conv_data.conv_bias_ptr);
     ops_vec.push_back(cba15_27);
     // conv16 + bn15
-    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_param = {1, 1, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(16);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(15);
     cb16_28 = CPUFusionCBOp::create(conv_param, bn_data,
@@ -257,7 +257,7 @@ void Executor::parseModel() {
     ac15_31 = CPUActiveOp::create(ACTIVE_RELU, sstemp_0, sstemp_1);
     ops_vec.push_back(ac15_31);
     // conv18 + bn16 + at16
-    conv_param = {1, 1, 1, 1, 0, 0, 0};
+    conv_param = {1, 1, 1, 1, 2, 2, 0};
     conv_data = resnet_model_data_ptr->getConvModelData(18);
     bn_data = resnet_model_data_ptr->getBatchNormModelData(16);
     cba18_32 = CPUFusionCBAOp::create(conv_param, bn_data, ACTIVE_RELU,

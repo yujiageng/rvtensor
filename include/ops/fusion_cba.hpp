@@ -71,6 +71,12 @@ class CPUFusionCBAOp : public Operation {
 
   // 激活
   void relu(float* input, int size);
+
+  /**
+     * check output dims
+     */
+    void checkOutputDims() override;
+
   /**
    * inference
    */

@@ -157,7 +157,7 @@ void ResnetModelData::transpose(float* input, int n, int c, int h, int w) {
             }
         }
     }
-    memcpy(input, temp, n * c * h * w);
+    memcpy(input, temp, n * c * h * w * sizeof(float));
     free(temp);
 }
 
@@ -170,7 +170,7 @@ void ResnetModelData::transpose(float* input, int h, int w) {
             temp[index_t] = input[index_i];
         }
     }
-    memcpy(input, temp, h * w);
+    memcpy(input, temp, h * w * sizeof(float));
     free(temp);
 }
 

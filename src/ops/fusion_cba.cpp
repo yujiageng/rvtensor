@@ -20,7 +20,7 @@ CPUFusionCBAOp::sptr CPUFusionCBAOp::create(
     FlashTensor::sptr bias) {
   CPUFusionCBAOp::sptr ptr = std::make_shared<CPUFusionCBAOp>(
       conv_param, bn_param, active_type, input, output, weight, bias);
-  // ptr->checkOutputDims();
+  ptr->checkOutputDims();
   return ptr;
 }
 
@@ -44,6 +44,39 @@ inline CPUFusionCBAOp::CPUFusionCBAOp(
       bias_(bias) {}
 
 inline CPUFusionCBAOp::~CPUFusionCBAOp() {}
+
+inline void CPUFusionCBAOp::checkOutputDims() {
+  auto input = getInputs()[0];
+  auto output = getOutputs()[0];
+  if (input->channel != weight_->channel) {
+    throw std::runtime_error("CPUFusionCBAOp channel of input is wrong!");
+  }
+
+  int input_h = input->height + conv_param_.ph;
+  int input_w = input->width + conv_param_.pw;
+  int kh =
+      conv_param_.dh > 1 ? (weight_->height - 1) * conv_param_.dh + 1 : weight_->height;
+  int kw =
+      conv_param_.dw > 1 ? (weight_->width - 1) * conv_param_.dw + 1 : weight_->width;
+  int output_h = (input_h - kh) / conv_param_.sh + 1;
+  int output_w = (input_w - kw) / conv_param_.sw + 1;
+  int output_c = weight_->n_batch;
+  int output_n = input->n_batch;
+  if (output->n_batch != output_n || output->channel != output_c ||
+      output->height != output_h || output->width != output_w) {
+    printf("infer: n(%d) c(%d) h(%d) w(%d)\n", output_n, output_c, output_h, output_w);
+    printf("actual: n(%d) c(%d) h(%d) w(%d)\n", output->n_batch, output->channel, output->height, output->width);
+    throw std::runtime_error("CPUFusionCBAOp output shape is wrong!");
+  }
+
+  if (input_h < kh) {
+    throw std::runtime_error("CPUFusionCBAOp kernel_h is wrong");
+  }
+
+  if (input_w < kw) {
+    throw std::runtime_error("CPUFusionCBAOp kernel_w is wrong!");
+  }
+}
 
 inline void CPUFusionCBAOp::forward_compute() {
   auto input_tensor = getInputs()[0];
