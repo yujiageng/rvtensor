@@ -30,6 +30,7 @@ struct ConvParam {
 enum ActiveType {
   ACTIVE_SIGMOID = 0,
   ACTIVE_RELU = 1,
+  ACTIVE_SOFTMAX = 2,
 };
 
 struct BnModelData {

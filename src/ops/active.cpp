@@ -38,11 +38,14 @@ inline void CPUActiveOp::forward_compute() {
   float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
 
   // TODO: complete it
-  if (!param_) {
-    softmax(input, input_tensor->trueSize(), output);
+  if (param_ == ACTIVE_SOFTMAX) {
+    softmax(input, input_tensor->count(), output);
+  } else if (param_ == ACTIVE_RELU) {
+    relu(input, input_tensor->count(), output);
   } else {
-    relu(input, input_tensor->trueSize(), output);
+    throw std::runtime_error("Cannot find active function!");
   }
+
 }
 void CPUActiveOp::relu(float* inputs, int n, float* outputs) {
   int i;
@@ -54,6 +57,7 @@ void CPUActiveOp::relu(float* inputs, int n, float* outputs) {
     }
   }
 }
+
 void CPUActiveOp::softmax(float* input, int n, float* output) {
   int i;
   float sum = 0;
