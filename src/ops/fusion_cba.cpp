@@ -45,7 +45,7 @@ inline CPUFusionCBAOp::CPUFusionCBAOp(
 
 inline CPUFusionCBAOp::~CPUFusionCBAOp() {}
 
-inline void CPUFusionCBAOp::checkOutputDims() {
+void CPUFusionCBAOp::checkOutputDims() {
   auto input = getInputs()[0];
   auto output = getOutputs()[0];
   if (input->channel != weight_->channel) {
@@ -78,7 +78,7 @@ inline void CPUFusionCBAOp::checkOutputDims() {
   }
 }
 
-inline void CPUFusionCBAOp::forward_compute() {
+void CPUFusionCBAOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
@@ -171,20 +171,12 @@ inline void CPUFusionCBAOp::forward_compute() {
                          temp_weight[coo * ci * kh * kw + cii * kh * kw +
                          (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
                          (kernel_shift_w + kernel_shift_dw + w - start_w)];
-                         // temp_weight
-                         // [(kernel_shift_h + kernel_shift_dh + h - start_h) * kw * ci * co +
-                         //  (kernel_shift_w + kernel_shift_dw + w - start_w) * ci * co +
-                         //  cii * co + coo];
                 } else if (input_tensor->element_size == 1u) {
                     output[n * co * ho * wo + coo * ho * wo + hoo * wo + woo] +=
-                        ((uint8_t*)input)[n * ci * hi * wi + cii * hi * wi + h * wi + w] *
+                        ((uint8_t*)input)[n * ci * hi * wi + cii * hi * wi + h * wi + w] * 1./255 *
                          temp_weight[coo * ci * kh * kw + cii * kh * kw +
                          (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
                          (kernel_shift_w + kernel_shift_dw + w - start_w)];
-                         // temp_weight
-                         // [(kernel_shift_h + kernel_shift_dh + h - start_h) * kw * ci * co +
-                         //  (kernel_shift_w + kernel_shift_dw + w - start_w) * ci * co +
-                         //  cii * co + coo];
                 }
               }
             }
@@ -269,7 +261,7 @@ inline void CPUFusionCBAOp::forward_compute() {
 }
 
 template <typename T>
-inline void CPUFusionCBAOp::mm_generate(T* matA, float* matB,
+void CPUFusionCBAOp::mm_generate(T* matA, float* matB,
                                         float* matC, const int M, const int N,
                                         const int K, const int strideA,
                                         const int strideB, const int strideC) {
@@ -286,7 +278,7 @@ inline void CPUFusionCBAOp::mm_generate(T* matA, float* matB,
 
 
 template <typename T>
-inline void CPUFusionCBAOp::coppersmith_winograd(T* matA, float* matB,
+void CPUFusionCBAOp::coppersmith_winograd(T* matA, float* matB,
                                                 float* matC, int M, int N,
                                                 int K, int strideA,
                                                 int strideB, int strideC) {
@@ -410,7 +402,7 @@ inline void CPUFusionCBAOp::coppersmith_winograd(T* matA, float* matB,
 }
 
 template <typename T>
-inline float CPUFusionCBAOp::im2col_get_pixel(T* im, int height,
+float CPUFusionCBAOp::im2col_get_pixel(T* im, int height,
                                               int width, int channels, int row,
                                               int col, int channel, int pad) {
   row -= pad;
@@ -421,7 +413,7 @@ inline float CPUFusionCBAOp::im2col_get_pixel(T* im, int height,
 }
 
 template <typename T>
-inline void CPUFusionCBAOp::im2col_cpu(T* data_im, int channels,
+void CPUFusionCBAOp::im2col_cpu(T* data_im, int channels,
                                        int height, int width, int ksize,
                                        int stride, int pad, T* data_col) {
   int c, h, w;
@@ -450,14 +442,14 @@ inline void CPUFusionCBAOp::im2col_cpu(T* data_im, int channels,
   }
 }
 
-inline void CPUFusionCBAOp::copy_cpu(int N, float* X, int INCX, float* Y,
+void CPUFusionCBAOp::copy_cpu(int N, float* X, int INCX, float* Y,
                                      int INCY) {
   int i;
   for (i = 0; i < N; ++i) Y[i * INCY] = X[i * INCX];
 }
 
 //归一化
-inline void CPUFusionCBAOp::normalize_cpu(float* x, float* mean,
+void CPUFusionCBAOp::normalize_cpu(float* x, float* mean,
                                           float* variance, float*gamma,
                                           float* beta, int batch,
                                           int filters, int spatial) {
@@ -473,7 +465,7 @@ inline void CPUFusionCBAOp::normalize_cpu(float* x, float* mean,
     }
   }
 }
-inline void CPUFusionCBAOp::scale_bias(float* output, float* scales,
+void CPUFusionCBAOp::scale_bias(float* output, float* scales,
                                        int batch, int n, int size) {
   // scales 全是1
   int i, j, b;
@@ -485,7 +477,7 @@ inline void CPUFusionCBAOp::scale_bias(float* output, float* scales,
     }
   }
 }
-inline void CPUFusionCBAOp::add_bias(float* output, float* biases,
+void CPUFusionCBAOp::add_bias(float* output, float* biases,
                                      int batch, int n, int size) {
   int i, j, b;
   for (b = 0; b < batch; ++b) {

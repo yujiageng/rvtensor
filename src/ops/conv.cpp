@@ -37,7 +37,7 @@ inline CPUConvOp::CPUConvOp(ConvParam conv_param, RamTensor::sptr input,
 
 inline CPUConvOp::~CPUConvOp() {}
 
-inline void CPUConvOp::checkOutputDims() {
+void CPUConvOp::checkOutputDims() {
   auto input = getInputs()[0];
   auto output = getOutputs()[0];
   if (input->channel != weight_->channel) {
@@ -68,7 +68,7 @@ inline void CPUConvOp::checkOutputDims() {
   }
 }
 
-inline void CPUConvOp::forward_compute() {
+void CPUConvOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
@@ -153,10 +153,6 @@ inline void CPUConvOp::forward_compute() {
                         [coo * ci * kh * kw + cii * kh * kw +
                          (kernel_shift_h + kernel_shift_dh + h - start_h) * kw +
                          (kernel_shift_w + kernel_shift_dw + w - start_w)];
-                    // temp_weight
-                    //     [(kernel_shift_h + kernel_shift_dh + h - start_h) * kw * ci * co +
-                    //      (kernel_shift_w + kernel_shift_dw + w - start_w) * ci * co +
-                    //      cii * co + coo];
               }
             }
           }

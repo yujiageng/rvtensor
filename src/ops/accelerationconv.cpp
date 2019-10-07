@@ -41,7 +41,7 @@ inline CPUAccelerationConvOp::CPUAccelerationConvOp(ConvParam conv_param,
 
 inline CPUAccelerationConvOp::~CPUAccelerationConvOp() {}
 
-inline void CPUAccelerationConvOp::checkOutputDims() {
+void CPUAccelerationConvOp::checkOutputDims() {
   auto input = getInputs()[0];
   auto output = getOutputs()[0];
   if (input->channel != weight_->channel) {
@@ -79,7 +79,7 @@ inline void CPUAccelerationConvOp::checkOutputDims() {
  *    b、cw
  *
  * */
-inline void CPUAccelerationConvOp::forward_compute() {
+void CPUAccelerationConvOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 
@@ -141,7 +141,7 @@ inline void CPUAccelerationConvOp::forward_compute() {
   }
 }
 
-inline void CPUAccelerationConvOp::mm_generate(
+void CPUAccelerationConvOp::mm_generate(
     float* matA, float* matB, float* matC, const int M, const int N,
     const int K, const int strideA, const int strideB, const int strideC) {
   //    printf("into mm_generate\n");
@@ -165,7 +165,7 @@ inline void CPUAccelerationConvOp::mm_generate(
 **        strideB     B的列数
 **        strideC     C的列数
 */
-inline void CPUAccelerationConvOp::coppersmith_winograd(
+void CPUAccelerationConvOp::coppersmith_winograd(
     float* matA, float* matB, float* matC, int M, int N, int K,
     int strideA, int strideB, int strideC) {
   // step 1:使用普通的矩阵
@@ -287,7 +287,7 @@ inline void CPUAccelerationConvOp::coppersmith_winograd(
   }
 }
 
-inline float CPUAccelerationConvOp::im2col_get_pixel(float* im, int height,
+float CPUAccelerationConvOp::im2col_get_pixel(float* im, int height,
                                                      int width, int channels,
                                                      int row, int col,
                                                      int channel, int pad) {
@@ -298,7 +298,7 @@ inline float CPUAccelerationConvOp::im2col_get_pixel(float* im, int height,
   return im[col + width * (row + height * channel)];
 }
 
-inline void CPUAccelerationConvOp::im2col_cpu(float* data_im, int channels,
+void CPUAccelerationConvOp::im2col_cpu(float* data_im, int channels,
                                               int height, int width, int ksize,
                                               int stride, int pad,
                                               float* data_col) {

@@ -30,7 +30,7 @@ inline CPUActiveOp::CPUActiveOp(ActiveType active_type, RamTensor::sptr input,
 
 inline CPUActiveOp::~CPUActiveOp() {}
 // 对feature map 进行激活
-inline void CPUActiveOp::forward_compute() {
+void CPUActiveOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 

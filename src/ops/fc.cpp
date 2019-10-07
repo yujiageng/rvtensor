@@ -30,7 +30,7 @@ inline CPUFCOp::CPUFCOp(RamTensor::sptr input, RamTensor::sptr output,
 
 inline CPUFCOp::~CPUFCOp() {}
 
-inline void CPUFCOp::forward_compute() {
+void CPUFCOp::forward_compute() {
   auto input_tensor = getInputs()[0];
   auto output_tensor = getOutputs()[0];
 

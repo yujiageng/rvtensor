@@ -27,7 +27,7 @@ inline CPUAddOp::CPUAddOp(RamTensor::sptr input1, RamTensor::sptr input2,
 
 inline CPUAddOp::~CPUAddOp() {}
 
-inline void CPUAddOp::forward_compute() {
+void CPUAddOp::forward_compute() {
   auto input_tensor1 = getInputs()[0];
   auto input_tensor2 = getInputs()[1];
   auto output_tensor = getOutputs()[0];

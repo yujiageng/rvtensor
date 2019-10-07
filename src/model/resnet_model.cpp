@@ -14,7 +14,7 @@ ResnetModelData::sptr ResnetModelData::create() {
   return std::make_shared<ResnetModelData>();
 }
 
-inline ResnetModelData::ResnetModelData() {
+ResnetModelData::ResnetModelData() {
     bn_model_datas.reserve(19);
     conv_model_datas.reserve(21);
 
@@ -70,16 +70,20 @@ inline ResnetModelData::ResnetModelData() {
     dense_model_data.conv_bias_ptr = FlashTensor::create(1, 1, 1, 10, 4u);
 }
 
-inline ResnetModelData::~ResnetModelData() {
+ResnetModelData::~ResnetModelData() {
 
     for (size_t i = 0; i < 19; i++) {
         free(bn_model_datas[i].bn_beta_ptr->data_ptr);
         free(bn_model_datas[i].bn_gamma_ptr->data_ptr);
         free(bn_model_datas[i].bn_mean_ptr->data_ptr);
         free(bn_model_datas[i].bn_variance_ptr->data_ptr);
+    }
+    for (size_t i = 0; i < 21; i++) {
         free(conv_model_datas[i].conv_kernel_ptr->data_ptr);
         free(conv_model_datas[i].conv_bias_ptr->data_ptr);
     }
+    free(dense_model_data.conv_kernel_ptr->data_ptr);
+    free(dense_model_data.conv_bias_ptr->data_ptr);
 }
 
 void ResnetModelData::openModelFile(const char* filename) {
@@ -179,6 +183,10 @@ ConvModelData ResnetModelData::getConvModelData(int index) {
    int count;
    sprintf(buf, "model_weights/conv2d_%d/conv2d_%d/kernel:0", index, index);
    float* kernel = getWeightByID(buf, &count);
+   printf("transpose: index(%d) n(%d) c(%d) h(%d) w(%d)\n", index-1, conv_model_datas[index - 1].conv_kernel_ptr->n_batch,
+           conv_model_datas[index - 1].conv_kernel_ptr->channel,
+           conv_model_datas[index - 1].conv_kernel_ptr->height,
+           conv_model_datas[index - 1].conv_kernel_ptr->width);
    transpose(kernel, conv_model_datas[index - 1].conv_kernel_ptr->n_batch,
            conv_model_datas[index - 1].conv_kernel_ptr->channel,
            conv_model_datas[index - 1].conv_kernel_ptr->height,
