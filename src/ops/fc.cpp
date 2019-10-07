@@ -41,71 +41,42 @@ inline void CPUFCOp::forward_compute() {
       bias_ ? reinterpret_cast<float *>(bias_->data_ptr) : nullptr;
 
   // TODO: complete it
-  int m = input_tensor->n_batch;
-  int k = input_tensor->count() / m;
-  int n = output_tensor->count() / m;
+  int n = input_tensor->n_batch;
+  int k = input_tensor->count() / n;
+  int m = output_tensor->count() / n;
 
-  multl(m, n, k, input, k, weight, k, output, n);
-  // printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-  // for (int i = 0; i < output_tensor->count(); i++)
-  //     printf("output[%d] = %f\n", i, output[i]);
-  // printf("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
-  add_bias(output, bias, m, n, 1);
-  // printf("------------------------------------------\n");
-  // for (int i = 0; i < output_tensor->count(); i++)
-  //     printf("output[%d] = %f\n", i, output[i]);
-  // printf("------------------------------------------\n");
-  softmax(output, m, n);
-  // printf("******************************************\n");
-  // for (int i = 0; i < output_tensor->count(); i++)
-  //     printf("output[%d] = %f\n", i, output[i]);
-  // printf("******************************************\n");
-}
+  for (int ni = 0; ni < n; ni++) {
+      float* out = output + ni * m;
+      float largest = -FLT_MAX;
 
-inline void CPUFCOp::multl(int M, int N, int K, float *A, int lda, float *B,
-                           int ldb, float *C, int ldc) {
-  int i, j, k;
-  // M=batch，每个样本有N个输出
-  for (i = 0; i < M; ++i) {
-    for (j = 0; j < N; ++j) {
-      float sum = 0;
-      // K是inputs，即输入个数
-      for (k = 0; k < K; ++k) {
-        //输入项和权重项对应相乘相加
-        sum += A[i * lda + k] * B[j * ldb + k];
+      // fc
+      for (int mi = 0; mi < m; mi++) {
+          float sum = bias[mi];
+          for (int ki = 0; ki < k; ki++) {
+            int in_index = ni * k + ki;
+            int m_index = mi * k + ki;
+            sum += input[in_index] * weight[m_index];
+          }
+          out[mi] = sum;
+          if (out[mi] > largest) largest = out[mi];
       }
-      C[i * ldc + j] = sum;
-    }
-  }
-}
 
-inline void CPUFCOp::softmax(float *input, int batch, int n) {
-  for (int b = 0; b < batch; b++) {
-    float* in = input + b * n;
-    float largest = in[0];
-    float sum = 0;
-    for (int i = 0; i < n; i++) {
-      if (in[i] > largest) largest = in[i];
-    }
-    for (int i = 0; i < n; i++) {
-      float e = exp(in[i] - largest);
-      sum += e;
-      in[i] = e;
-    }
-    for (int i = 0; i < n; i++) {
-      in[i] /= sum;
-    }
+      // softmax
+      float sum = 0;
+      for (int mi = 0; mi < m; mi++) {
+        float e = exp(out[mi] - largest);
+        sum += e;
+        out[mi] = e;
+      }
+      for (int mi = 0; mi < m; mi++) {
+        out[mi] /= sum;
+      }
   }
-}
 
-inline void CPUFCOp::add_bias(float *output, float *biases, int batch,
-                              int n, int size) {
-  int i, j, b;
-  for (b = 0; b < batch; ++b) {
-    for (i = 0; i < n; ++i) {
-        output[b * n + i] += biases[i];
-    }
-  }
+  // printf("******************************************\n");
+  // for (int i = 0; i < output_tensor->count(); i++)
+  //     printf("output[%d] = %f\n", i, output[i]);
+  // printf("******************************************\n");
 }
 
 }  // namespace RVTensor
