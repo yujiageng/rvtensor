@@ -144,8 +144,8 @@ inline RamTensor::RamTensor(int n, int c, int h, int w, size_t elemsize)
   : Tensor(n, c, h, w, elemsize), is_malloced(true) {
 
     if (trueSize() > 0) {
-      size_t total_size = alignSize(trueSize() * elemsize, 4);
-      data_ptr = tensorDataMalloc(total_size);
+      // size_t total_size = alignSize(trueSize() * elemsize, 4);
+      data_ptr = tensorDataMalloc(trueSize());
     }
 }
 
@@ -201,19 +201,23 @@ void RamTensor::reConfigTensor(int n, int c, int h, int w, void* data,
 }
 
 void* RamTensor::tensorDataMalloc(size_t size) {
-  unsigned char* udata = (unsigned char*)malloc(size +
-                          sizeof(void*) + MALLOC_ALIGN);
+  // unsigned char* udata = (unsigned char*)malloc(size +
+  //                         sizeof(void*) + MALLOC_ALIGN);
+  // if (!udata)
+  //   return 0;
+  // unsigned char** adata = alignPtr((unsigned char**)udata + 1, MALLOC_ALIGN);
+  // adata[-1] = udata;
+  // return adata;
+  unsigned char* udata = (unsigned char*)malloc(size);
   if (!udata)
-    return 0;
-  unsigned char** adata = alignPtr((unsigned char**)udata + 1, MALLOC_ALIGN);
-  adata[-1] = udata;
-  return adata;
+     return 0;
+  return (void*)udata;
 }
 
 void RamTensor::tensorDataFree() {
   if (data_ptr) {
-    unsigned char* udata = ((unsigned char**)data_ptr)[-1];
-    free(udata);
+    // unsigned char* udata = ((unsigned char**)data_ptr)[-1];
+    free(data_ptr);
   }
 }
 

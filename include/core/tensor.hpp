@@ -16,21 +16,21 @@ namespace RVTensor {
 /**
  * Aligns a buffer size to the specified number of bytes
  */
-static inline size_t alignSize(size_t sz, int n) { return (sz + n - 1) & -n; }
+// static inline size_t alignSize(size_t sz, int n) { return (sz + n - 1) & -n; }
 
 /**
  * the alignment of all the allocated buffers
  */
-#define MALLOC_ALIGN 16
+// #define MALLOC_ALIGN 16
 
 /**Aligns a pointer to the specified number of bytes
  * @param ptr: Aligned pointer
  * @param n: Alignment size that must be a power of two
  */
-template <typename _Tp>
-static inline _Tp* alignPtr(_Tp* ptr, int n = sizeof(_Tp)) {
-  return reinterpret_cast<_Tp*>(((size_t)ptr + n - 1) & -n);
-}
+// template <typename _Tp>
+// static inline _Tp* alignPtr(_Tp* ptr, int n = sizeof(_Tp)) {
+//   return reinterpret_cast<_Tp*>(((size_t)ptr + n - 1) & -n);
+// }
 
 /**
  * RVTensor data descriptor
