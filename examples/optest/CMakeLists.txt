@@ -1,0 +1,29 @@
+set(QEMU_OPTEST_NAME qemu_optest)
+
+FILE(GLOB_RECURSE QEMU_OPTEST_SRCS
+    "${CMAKE_CURRENT_LIST_DIR}/*.h"
+    "${CMAKE_CURRENT_LIST_DIR}/*.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/*.c"
+    "${CMAKE_CURRENT_LIST_DIR}/*.s"
+    "${CMAKE_CURRENT_LIST_DIR}/*.S"
+    )
+message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(${CMAKE_CURRENT_LIST_DIR})
+
+if(RISCV)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/include)
+    link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-release/lib)
+elseif(X86)
+    include_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-x86/include)
+    link_directories(${THIRD_PARTY_DIR}/hdf5-1.10.5-x86/lib)
+endif()
+
+add_executable(${QEMU_OPTEST_NAME} ${QEMU_OPTEST_SRCS})
+target_link_libraries(${QEMU_OPTEST_NAME} RVTensor
+                -Wl,--start-group
+                -Wl,--gc-sections
+                m atomic c stdc++ hdf5
+                -Wl,--end-group
+                )
+set_target_properties(${QEMU_OPTEST_NAME} PROPERTIES LINKER_LANGUAGE C)
