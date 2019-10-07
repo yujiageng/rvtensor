@@ -121,7 +121,7 @@ inline void CPUAccelerationConvOp::forward_compute() {
   for (int i = 0; i < ni; ++i) {
     /*用于存储经im2col转换后的输入特征矩阵*/
     float* a = (float*)calloc(((k+1)*height_col+1)*width_col, sizeof(float));
-
+    bool need_free = true;
     /*a是指向当前层所有卷积核的*/
     float* b = weight;
     /*输出特征图个数*/
@@ -129,13 +129,15 @@ inline void CPUAccelerationConvOp::forward_compute() {
     float* im = input + i * ci * hi * wi;
     /*如果是1*1的卷积，那么不用对输入特征进行转化*/
     if (kh * kw == 1) {
+      free(a);
+      need_free = false;
       a = im;
     } else {
       /*对输入特征进行转化*/
       im2col_cpu(im, ci, hi, wi, kh, sh, ph, a);
     }
     coppersmith_winograd(a, b, c, m, n, k, k, n, n);
-    free(a);
+    if(need_free) free(a);
   }
 }
 

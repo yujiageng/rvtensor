@@ -34,6 +34,7 @@ inline void CPUAddOp::forward_compute() {
 
   float* input1 = reinterpret_cast<float*>(input_tensor1->data_ptr);
   float* input2 = reinterpret_cast<float*>(input_tensor2->data_ptr);
+  assert(input1 != input2);
   float* output = reinterpret_cast<float*>(output_tensor->data_ptr);
   // 两个feature map x相加
   // TODO: complete it
