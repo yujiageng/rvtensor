@@ -183,10 +183,10 @@ ConvModelData ResnetModelData::getConvModelData(int index) {
    int count;
    sprintf(buf, "model_weights/conv2d_%d/conv2d_%d/kernel:0", index, index);
    float* kernel = getWeightByID(buf, &count);
-   transpose(kernel, conv_model_datas[index - 1].conv_kernel_ptr->n_batch,
-           conv_model_datas[index - 1].conv_kernel_ptr->channel,
-           conv_model_datas[index - 1].conv_kernel_ptr->height,
-           conv_model_datas[index - 1].conv_kernel_ptr->width);
+   // transpose(kernel, conv_model_datas[index - 1].conv_kernel_ptr->n_batch,
+   //         conv_model_datas[index - 1].conv_kernel_ptr->channel,
+   //         conv_model_datas[index - 1].conv_kernel_ptr->height,
+   //         conv_model_datas[index - 1].conv_kernel_ptr->width);
    conv_model_datas[index - 1].conv_kernel_ptr->bindModelData(
                                     (void*)kernel, count * sizeof(float));
    sprintf(buf, "model_weights/conv2d_%d/conv2d_%d/bias:0", index, index);
@@ -202,8 +202,8 @@ ConvModelData ResnetModelData::getDenseModelData() {
    int count;
    sprintf(buf, "model_weights/dense_1/dense_1/kernel:0");
    float* kernel = getWeightByID(buf, &count);
-   transpose(kernel, dense_model_data.conv_kernel_ptr->height,
-             dense_model_data.conv_kernel_ptr->width);
+   // transpose(kernel, dense_model_data.conv_kernel_ptr->height,
+   //           dense_model_data.conv_kernel_ptr->width);
    dense_model_data.conv_kernel_ptr->bindModelData(
                                     (void*)kernel, count * sizeof(float));
 
