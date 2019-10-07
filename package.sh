@@ -20,6 +20,6 @@ mkdir -p $SIFIVENAME
 cp -a build-qemu-riscv/examples/resnet20/qemu_resnet20 $SIFIVENAME/
 cp -a data/cifar_resnet/resnet20.h5 $SIFIVENAME/
 cp -a data/cifar-10-batches-bin/test_batch.bin $SIFIVENAME/
-cp -a third_party/hdf5-1.10.5-release/lib/libhdf5.so.* $SIFIVENAME/
+cp -a third_party/hdf5-1.10.5-release/lib/libhdf5.so* $SIFIVENAME/
 rm -fr $SIFIVENAME.zip
 zip -9 -r $SIFIVENAME.zip $SIFIVENAME
