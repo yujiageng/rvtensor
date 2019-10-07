@@ -73,10 +73,6 @@ void CPUFCOp::forward_compute() {
       }
   }
 
-  // printf("******************************************\n");
-  // for (int i = 0; i < output_tensor->count(); i++)
-  //     printf("output[%d] = %f\n", i, output[i]);
-  // printf("******************************************\n");
 }
 
 }  // namespace RVTensor

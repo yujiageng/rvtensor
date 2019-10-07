@@ -56,7 +56,7 @@ void Executor::parseModel() {
     sstemp_1 = RamTensor::create(n_batch, 64, 8, 8, temp_1->data_ptr, 4u);
     sstemp_2 = RamTensor::create(n_batch, 64, 8, 8, temp_2->data_ptr, 4u);
 
-    pool_temp = RamTensor::create(n_batch, 1, 1, 64, temp_0->data_ptr, 4u);
+    pool_temp = RamTensor::create(n_batch, 64, 1, 1, temp_0->data_ptr, 4u);
 
     // conv1 + bn1 + at1
     ConvParam conv_param = {1, 1, 1, 1, 2, 2, 0};
@@ -334,9 +334,7 @@ void Executor::loadImage(std::string image_name,
         printf("error of fread 3072\n");
         exit(0);
     }
-    // printf("Batch:%d  label:%d\n", i+1, *((uint8_t*)(label_ptr->data_ptr) + i));
   }
-
   fclose(fpr);
 }
 
