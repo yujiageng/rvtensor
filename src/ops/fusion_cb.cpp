@@ -412,8 +412,8 @@ inline void CPUFusionCBOp::normalize_cpu(float* x, float* mean,
   int b, f, i;
   for (b = 0; b < batch; ++b) {
     for (f = 0; f < filters; ++f) {
-      int offset = beta[f] - gamma[f] * mean[f] / sqrt(variance[f] + 0.001f);
-      int slope = gamma[f] / sqrt(variance[f] + 0.001f);
+      float offset = beta[f] - gamma[f] * mean[f] / sqrt(variance[f] + 0.001f);
+      float slope = gamma[f] / sqrt(variance[f] + 0.001f);
       for (i = 0; i < spatial; ++i) {
         int index = b * filters * spatial + f * spatial + i;
         x[index] = slope * x[index] + offset;
